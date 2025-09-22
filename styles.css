@@ -72,6 +72,28 @@ main {
   width: 270px;
 }
 
+.contact-form-box {
+  max-width: 400px;
+  margin: auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.contact-form-box h2 {
+  text-align: center;
+  color: #34495e;
+}
+
+.contact-form-box input, .contact-form-box textarea, .contact-form-box button {
+  margin: 0.75rem 0;
+  padding: 1.5rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 280px;
+}
+
 button {
   background: #3498db;
   border: none;
