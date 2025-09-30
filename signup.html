@@ -22,16 +22,50 @@
 </header>
 
 <main>
-  <form class="form-box">
+  <form class="form-box" id="signupForm">
     <h2>Create Your Library Account</h2>
     <label>Full Name:</label>
-    <input type="text" required>
+    <input type="text" id="fullName" required>
     <label>Email:</label>
-    <input type="email" required>
+    <input type="email" id="email" required>
     <label>Password:</label>
-    <input type="password" required>
+    <input type="password" id="password" required>
     <button type="submit">Register</button>
   </form>
+  <p id="signupMessage" style="text-align:center;color:green;"></p>
 </main>
+
+<script>
+  document.getElementById("signupForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    let name = document.getElementById("fullName").value;
+    let email = document.getElementById("email").value;
+    let password = document.getElementById("password").value;
+
+    // Load existing users or empty list
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+
+    // Prevent duplicate emails
+    if (users.find(user => user.email === email)) {
+      document.getElementById("signupMessage").style.color = "red";
+      document.getElementById("signupMessage").innerText = "Email already registered!";
+      return;
+    }
+
+    // Add new user
+    users.push({ name, email, password });
+
+    // Save back to localStorage
+    localStorage.setItem("users", JSON.stringify(users));
+
+    document.getElementById("signupMessage").style.color = "green";
+    document.getElementById("signupMessage").innerText = "Registration successful! You can now login.";
+
+    // Reset the form
+    document.getElementById("signupForm").reset();
+  });
+</script>
+
 </body>
 </html>

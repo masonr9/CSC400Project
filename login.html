@@ -22,14 +22,38 @@
 </header>
 
 <main>
-  <form class="form-box">
+  <form class="form-box" id="loginForm">
     <h2>Login to Your Account</h2>
     <label>Email:</label>
-    <input type="email" required>
+    <input type="email" id="loginEmail" required>
     <label>Password:</label>
-    <input type="password" required>
+    <input type="password" id="loginPassword" required>
     <button type="submit">Login</button>
   </form>
+  <p id="loginMessage" style="text-align:center;color:red;"></p>
 </main>
+
+<script>
+  document.getElementById("loginForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    let email = document.getElementById("loginEmail").value;
+    let password = document.getElementById("loginPassword").value;
+
+    // Get stored users from localStorage
+    let storedUsers = JSON.parse(localStorage.getItem("users")) || [];
+
+    // Find if user exists
+    let foundUser = storedUsers.find(user => user.email === email && user.password === password);
+
+    if (foundUser) {
+      // Save logged-in user
+      localStorage.setItem("loggedInUser", JSON.stringify(foundUser));
+      window.location.href = "librarian.html"; // Redirect to librarian page
+    } else {
+      document.getElementById("loginMessage").innerText = "Invalid email or password!";
+    }
+  });
+</script>
 </body>
 </html>
