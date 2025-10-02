@@ -20,7 +20,26 @@
 
 <main>
   <h2>Member Management</h2>
-  <p>Here you can add, update, or remove library members.</p>
+
+  <form id="memberForm" class="form-box">
+    <label>Member Name:</label>
+    <input type="text" id="memberName" required>
+    <label>Email:</label>
+    <input type="email" id="memberEmail" required>
+    <button type="submit">Add Member</button>
+  </form>
+
+  <h3>Registered Members</h3>
+  <table border="1" width="100%" id="memberTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Remove</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </main>
 
 <script>
@@ -32,7 +51,41 @@
     localStorage.removeItem("loggedInUser");
     window.location.href = "login.html";
   });
+
+  let members = JSON.parse(localStorage.getItem("members")) || [];
+
+  function renderMembers() {
+    let tbody = document.querySelector("#memberTable tbody");
+    tbody.innerHTML = "";
+    members.forEach((m, index) => {
+      let row = `<tr>
+        <td>${m.name}</td>
+        <td>${m.email}</td>
+        <td><button onclick="removeMember(${index})">Remove</button></td>
+      </tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  function removeMember(index) {
+    members.splice(index, 1);
+    localStorage.setItem("members", JSON.stringify(members));
+    renderMembers();
+  }
+
+  document.getElementById("memberForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    let name = document.getElementById("memberName").value;
+    let email = document.getElementById("memberEmail").value;
+    members.push({ name, email });
+    localStorage.setItem("members", JSON.stringify(members));
+    renderMembers();
+    e.target.reset();
+  });
+
+  renderMembers();
 </script>
 
 </body>
 </html>
+

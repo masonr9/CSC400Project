@@ -12,7 +12,7 @@
   <h1>Library Management System</h1>
   <nav>
     <ul>
-      <li><a href="librarian.html">Librarian Dashboard</a></li>
+      <li><a href="librarian.html"> Librarian Dashboard</a></li>
       <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
     </ul>
   </nav>
@@ -20,7 +20,17 @@
 
 <main>
   <h2>Approve Reservations</h2>
-  <p>Here you can review and approve pending book reservations.</p>
+
+  <table border="1" width="100%" id="reservationTable">
+    <thead>
+      <tr>
+        <th>Member</th>
+        <th>Book</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </main>
 
 <script>
@@ -32,7 +42,36 @@
     localStorage.removeItem("loggedInUser");
     window.location.href = "login.html";
   });
+
+  let reservations = JSON.parse(localStorage.getItem("reservations")) || [
+  ];
+
+  function renderReservations() {
+    let tbody = document.querySelector("#reservationTable tbody");
+    tbody.innerHTML = "";
+    reservations.forEach((r, index) => {
+      let row = `<tr>
+        <td>${r.member}</td>
+        <td>${r.book}</td>
+        <td>
+          ${r.status === "Pending" 
+            ? `<button onclick="approve(${index})">Approve</button>` 
+            : r.status}
+        </td>
+      </tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  function approve(index) {
+    reservations[index].status = "Approved";
+    localStorage.setItem("reservations", JSON.stringify(reservations));
+    renderReservations();
+  }
+
+  renderReservations();
 </script>
 
 </body>
 </html>
+

@@ -20,19 +20,75 @@
 
 <main>
   <h2>Manage Books</h2>
-  <p>Here you can add, edit, or remove books from the library catalog.</p>
+
+  <form id="bookForm" class="form-box">
+    <label>Book Title:</label>
+    <input type="text" id="bookTitle" required>
+    <label>Author:</label>
+    <input type="text" id="bookAuthor" required>
+    <button type="submit">Add Book</button>
+  </form>
+
+  <h3>Book Catalog</h3>
+  <table border="1" width="100%" id="bookTable">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Remove</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </main>
 
 <script>
+  // Auth check
   let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!loggedInUser || loggedInUser.role !== "Librarian") {
     window.location.href = "login.html";
   }
+
   document.getElementById("logoutBtn").addEventListener("click", function() {
     localStorage.removeItem("loggedInUser");
     window.location.href = "login.html";
   });
+
+  // Book storage
+  let books = JSON.parse(localStorage.getItem("books")) || [];
+
+  function renderBooks() {
+    let tbody = document.querySelector("#bookTable tbody");
+    tbody.innerHTML = "";
+    books.forEach((book, index) => {
+      let row = `<tr>
+        <td>${book.title}</td>
+        <td>${book.author}</td>
+        <td><button onclick="removeBook(${index})">Remove</button></td>
+      </tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  function removeBook(index) {
+    books.splice(index, 1);
+    localStorage.setItem("books", JSON.stringify(books));
+    renderBooks();
+  }
+
+  document.getElementById("bookForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    let title = document.getElementById("bookTitle").value;
+    let author = document.getElementById("bookAuthor").value;
+    books.push({ title, author });
+    localStorage.setItem("books", JSON.stringify(books));
+    renderBooks();
+    e.target.reset();
+  });
+
+  renderBooks();
 </script>
 
 </body>
 </html>
+

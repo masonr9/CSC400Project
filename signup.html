@@ -67,10 +67,18 @@
     }
 
     // Add new user with role
-    users.push({ name, email, password, role });
+    let newUser = { name, email, password, role };
+    users.push(newUser);
 
-    // Save back to localStorage
+    // Save users back to localStorage
     localStorage.setItem("users", JSON.stringify(users));
+
+    // If the user is a Member, also add them to "members"
+    if (role === "Member") {
+      let members = JSON.parse(localStorage.getItem("members")) || [];
+      members.push({ name, email });
+      localStorage.setItem("members", JSON.stringify(members));
+    }
 
     document.getElementById("signupMessage").style.color = "green";
     document.getElementById("signupMessage").innerText = "Registration successful! You can now login.";
