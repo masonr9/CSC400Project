@@ -12,25 +12,44 @@
   <h1>Library Management System</h1>
   <nav>
     <ul>
-      <li><a href="index.html">Home</a></li>
       <li><a href="catalog.html">Catalog</a></li>
-      <li><a href="login.html">Login</a></li>
-      <li><a href="signup.html">Sign Up</a></li>
-      <li><a href="contact.html">Contact Us</a></li>
+      <li><a href="members.html">Members</a></li>
+      <li><a href="reservations.html">Reservations</a></li>
+      <li><a href="overdue.html">Overdue</a></li>
+      <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
     </ul>
   </nav>
 </header>
 
 <main>
   <section>
-    <h2>Librarian Tasks</h2>
-    <ul>
-      <li>Manage Books</li>
-      <li>Approve Reservations</li>
-      <li>Overdue Tracking</li>
-      <li>Member Management</li>
+    <h2>Librarian Dashboard</h2>
+    <p id="welcomeUser"></p>
+    <h3>Available Tasks</h3>
+    <ul class="task-list">
+      <li><a href="manage_books.html">Manage Books</a></li>
+      <li><a href="approve_reservations.html">Approve Reservations</a></li>
+      <li><a href="overdue_tracking.html">Overdue Tracking</a></li>
+      <li><a href="member_management.html">Member Management</a></li>
     </ul>
   </section>
 </main>
+
+<script>
+  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+  if (!loggedInUser || loggedInUser.role !== "Librarian") {
+    window.location.href = "login.html";
+  } else {
+    document.getElementById("welcomeUser").innerText = "Welcome, " + loggedInUser.name;
+  }
+
+  document.getElementById("logoutBtn").addEventListener("click", function() {
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+</script>
+
 </body>
 </html>
+

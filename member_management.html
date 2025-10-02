@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Member Management</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Library Management System</h1>
+  <nav>
+    <ul>
+      <li><a href="librarian.html">Librarian Dashboard</a></li>
+      <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h2>Member Management</h2>
+  <p>Here you can add, update, or remove library members.</p>
+</main>
+
+<script>
+  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!loggedInUser || loggedInUser.role !== "Librarian") {
+    window.location.href = "login.html";
+  }
+  document.getElementById("logoutBtn").addEventListener("click", function() {
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+</script>
+
+</body>
+</html>
