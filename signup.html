@@ -24,12 +24,24 @@
 <main>
   <form class="form-box" id="signupForm">
     <h2>Create Your Library Account</h2>
+    
     <label>Full Name:</label>
     <input type="text" id="fullName" required>
+    
     <label>Email:</label>
     <input type="email" id="email" required>
+    
     <label>Password:</label>
     <input type="password" id="password" required>
+    
+    <label>Role:</label>
+    <select id="role" required>
+      <option value="">-- Select Role --</option>
+      <option value="Admin">Admin</option>
+      <option value="Librarian">Librarian</option>
+      <option value="Member">Member</option>
+    </select>
+    
     <button type="submit">Register</button>
   </form>
   <p id="signupMessage" style="text-align:center;color:green;"></p>
@@ -42,6 +54,7 @@
     let name = document.getElementById("fullName").value;
     let email = document.getElementById("email").value;
     let password = document.getElementById("password").value;
+    let role = document.getElementById("role").value;
 
     // Load existing users or empty list
     let users = JSON.parse(localStorage.getItem("users")) || [];
@@ -53,8 +66,8 @@
       return;
     }
 
-    // Add new user
-    users.push({ name, email, password });
+    // Add new user with role
+    users.push({ name, email, password, role });
 
     // Save back to localStorage
     localStorage.setItem("users", JSON.stringify(users));
@@ -69,3 +82,4 @@
 
 </body>
 </html>
+

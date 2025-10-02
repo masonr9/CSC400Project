@@ -49,7 +49,15 @@
     if (foundUser) {
       // Save logged-in user
       localStorage.setItem("loggedInUser", JSON.stringify(foundUser));
-      window.location.href = "librarian.html"; // Redirect to librarian page
+
+      // Redirect based on role
+      if (foundUser.role === "Admin") {
+        window.location.href = "admin.html";
+      } else if (foundUser.role === "Librarian") {
+        window.location.href = "librarian.html";
+      } else {
+        window.location.href = "member.html";
+      }
     } else {
       document.getElementById("loginMessage").innerText = "Invalid email or password!";
     }
@@ -57,3 +65,4 @@
 </script>
 </body>
 </html>
+
