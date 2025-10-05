@@ -19,7 +19,7 @@
       $signupMessage = "Invalid email address.";
       $msgColor = "red";
     } elseif (strlen($password) < 8) {
-      $signupMessage = "Bro, your password must be at least 8 characters.";
+      $signupMessage = "Your password must be at least 8 characters.";
       $msgColor = "red";
     } else {
       // Check for duplicate email, prepare the select statement to check
