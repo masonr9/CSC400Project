@@ -93,17 +93,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     $flash = "New password must be at least 8 characters.";
     $flashColor = "red";
   } else {
-    if ($current !== $user['password']) { // compare the current password with stored password
+    if (!password_verify($current, $user['password'])) { // verify the current password against the stored hash
       $flash = "Current password is incorrect.";
       $flashColor = "red";
     } else {
+      // hash the new password
+      $newHash = password_hash($new, PASSWORD_DEFAULT);
       // prepare update to write the new password
       $stmt = mysqli_prepare($database, "UPDATE users SET password = ? WHERE user_id = ?");
-      mysqli_stmt_bind_param($stmt, "si", $new, $userId); // bind the new password and user id
+      mysqli_stmt_bind_param($stmt, "si", $newHash, $userId); // bind the new password and user id
       if (mysqli_stmt_execute($stmt)) { // execute the update
         $flash = "Password changed successfully.";
         $flashColor = "green";
-        $user['password'] = $new; // updates the in-memory user record for this request
+        $user['password'] = $newHash; // updates the in-memory user record for this request
       } else {
         $flash = "Server error. Please try again.";
         $flashColor = "red";
@@ -140,10 +142,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
   <section>
     <h2>Member Dashboard</h2>
     <ul>
-      <li>Search Books</li>
-      <li>My Loans</li>
-      <li>My Reservations</li>
-      <li>Fines</li>
+      <li><a href="catalog.php">Search Books</a></li>
+      <li><a href="loans.php">My Loans</a></li>
+      <li><a href="reservations.php">My Reservations</a></li>
+      <li><a href="fines.php">Fines</a></li>
     </ul>
   </section>
     <h2>My Account</h2>
@@ -170,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
       
       <label for="current_password">Current Password</label>
       <!-- pre-fill with current password -->
-      <input type="password" id="current_password" name="current_password" required value="<?= htmlspecialchars($user['password'] ?? '', ENT_QUOTES) ?>">
+      <input type="password" id="current_password" name="current_password" required>
 
       <label for="new_password">New Password</label>
       <input type="password" id="new_password" name="new_password" minlength="8" required>

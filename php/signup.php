@@ -1,4 +1,14 @@
 <?php
+  require __DIR__ . '/vendor/autoload.php'; // here we load composer's autoloader so PHPMailer is available
+  use PHPMailer\PHPMailer\PHPMailer; // imports the PHPMailer class into the current namespace
+  use PHPMailer\PHPMailer\Exception; // import PHPMailer's Exception class for try/catch
+  define('SMTP_USE', true);
+  define('SMTP_HOST', 'smtp.gmail.com');
+  define('SMTP_PORT', 587); // standard port for sending mail, it works with gmail, outlook
+  define('SMTP_USER', 'ryanmason1127@gmail.com');
+  define('SMTP_PASS', ' '); // Gmail app password
+  define('SMTP_FROM', 'ryanmason1127@gmail.com');
+  define('SMTP_FROM_NAME', 'Library Management System');
   include "connect.php"; // This is where $database comes from
 
   $signupMessage = "";
@@ -42,7 +52,7 @@
         mysqli_stmt_close($stmt);
 
         // Hash password
-        // $hashed = password_hash($password, PASSWORD_BCRYPT);
+        $hashed = password_hash($password, PASSWORD_DEFAULT);
 
         // ensures role is valid
         $allowedRoles = ['Member','Librarian','Admin'];
@@ -52,10 +62,50 @@
 
         // preparing to insert the new account into the database
         $stmt = mysqli_prepare($database, "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, "ssss", $name, $email, $password, $role);
+        mysqli_stmt_bind_param($stmt, "ssss", $name, $email, $hashed, $role);
 
         if (mysqli_stmt_execute($stmt)) {
-          $signupMessage = "Registration successful! You can now login.";
+          $sent = false;
+
+          // Subject & body
+          $subject = 'Welcome to the Library!';
+          $htmlBody =
+            "<p>Hi " . htmlspecialchars($name) . ",</p>
+            <p>Welcome to the Library Management System. Your account has been created successfully.</p>";
+          $textBody =
+            "Hi {$name},\n\n".
+            "Welcome to the Library Management System. Your account has been created successfully.\n";
+
+          if (SMTP_USE) { // this will only attempt to send mail if SMTP is enabled
+            try {
+              $mail = new PHPMailer(true); // creates a new PHPMailer instance; true is the value since it enables exceptions on errors
+              $mail->isSMTP(); // this tells PHPMailer to  use SMTP
+              $mail->Host       = SMTP_HOST;
+              $mail->SMTPAuth   = true; // enable SMTP authentication
+              $mail->Username   = SMTP_USER;
+              $mail->Password   = SMTP_PASS;
+              $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // use STARTTLS encryption
+              $mail->Port       = SMTP_PORT; // port 587 is for STARTTLS
+
+              $mail->setFrom(SMTP_FROM, SMTP_FROM_NAME); // sets the from address and the sender name
+              $mail->addAddress($email, $name); // adds a recipient with the email and name
+              $mail->isHTML(true);  // send the message as HTML so it allows tags and formatting
+              $mail->Subject = $subject;
+              $mail->Body    = $htmlBody; // sets the html version of the message body
+              $mail->AltBody = $textBody; // sets the plain-text fallback in the case of a client that doesn't render html
+
+              $mail->send(); // attempt to send the email via the configured SMTP server
+              $sent = true; // mark as sent so the site can show a success message
+            } catch (\Throwable $e) { // catch any exception such as connection, authentication or send issues.
+              // fall back, you can log $e->getMessage() for debugging
+              $sent = false;
+            }
+          }
+
+          $signupMessage = "Registration successful! A welcome email has been sent to your address.";
+          if (!$sent) {
+            $signupMessage = "Registration successful but we couldn't send the welcome email right now.";
+          }
           $msgColor = "green";
           // clear POST values so the form is reset on refresh
           $_POST = [];
@@ -95,7 +145,6 @@
 <main>
   <form class="form-box" id="signupForm" name="Registration" method="post" action="signup.php" novalidate>
     <h2>Create Your Library Account</h2>
-    
     <label>Full Name:</label>
     <!-- ENT_QUOTES is a flag for the method htmlspecialchars() that tells it to escape both single and double quotes. -->
     <input type="text" id="fullName" name="name" required value="<?= htmlspecialchars($_POST['name'] ?? '', ENT_QUOTES) ?>">
