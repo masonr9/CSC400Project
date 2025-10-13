@@ -12,7 +12,7 @@
   <h1>Library Management System</h1>
   <nav>
     <ul>
-      <li><a href="librarian.html">Librarian Dashboard</a></li>
+      <li><a href="librarian.html">Dashboard</a></li>
       <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
     </ul>
   </nav>
@@ -43,17 +43,22 @@
 </main>
 
 <script>
+  // Check if logged in and is a Librarian
   let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!loggedInUser || loggedInUser.role !== "Librarian") {
     window.location.href = "login.html";
   }
+
+  // Logout functionality
   document.getElementById("logoutBtn").addEventListener("click", function() {
     localStorage.removeItem("loggedInUser");
     window.location.href = "login.html";
   });
 
+  // Load existing members
   let members = JSON.parse(localStorage.getItem("members")) || [];
 
+  // Render the members table
   function renderMembers() {
     let tbody = document.querySelector("#memberTable tbody");
     tbody.innerHTML = "";
@@ -61,26 +66,40 @@
       let row = `<tr>
         <td>${m.name}</td>
         <td>${m.email}</td>
-        <td><button onclick="removeMember(${index})">Remove</button></td>
+        <td><button onclick="confirmRemove(${index})">Remove</button></td>
       </tr>`;
       tbody.innerHTML += row;
     });
   }
 
+  // Confirm before removing a member
+  function confirmRemove(index) {
+    let member = members[index];
+    let confirmDelete = confirm("Are you sure you want to remove " + member.name + "?");
+    if (confirmDelete) {
+      removeMember(index);
+    }
+  }
+
+  // Remove member and update storage
   function removeMember(index) {
     members.splice(index, 1);
     localStorage.setItem("members", JSON.stringify(members));
     renderMembers();
+    alert("Member removed successfully.");
   }
 
+  // Add new member
   document.getElementById("memberForm").addEventListener("submit", function(e) {
     e.preventDefault();
     let name = document.getElementById("memberName").value;
     let email = document.getElementById("memberEmail").value;
+
     members.push({ name, email });
     localStorage.setItem("members", JSON.stringify(members));
     renderMembers();
     e.target.reset();
+    alert("New member added successfully.");
   });
 
   renderMembers();
@@ -88,4 +107,5 @@
 
 </body>
 </html>
+
 
