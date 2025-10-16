@@ -8,18 +8,7 @@
 </head>
 <body>
   
-<header>
-  <h1>Library Management System</h1>
-  <nav>
-    <ul>
-      <li><a href="index.php">Home</a></li>
-      <li><a href="catalog.php">Catalog</a></li>
-      <li><a href="login.php">Login</a></li>
-      <li><a href="signup.php">Sign Up</a></li>
-      <li><a href="contact.php">Contact Us</a></li>
-    </ul>
-  </nav>
-</header>
+<?php include 'nav.php'; ?>
 
   <main>
     <section class="welcome">
