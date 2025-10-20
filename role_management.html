@@ -40,10 +40,25 @@
     <button id="assignBtn">Assign Role</button>
     <p id="statusMessage"></p>
   </section>
+
+  <section>
+    <h3>All Registered Users</h3>
+    <table border="1" width="100%" id="userTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
 </main>
 
 <script>
-  // Verify login role
+  // ✅ Verify admin login
   let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!loggedInUser || loggedInUser.role !== "Admin") {
     window.location.href = "login.html";
@@ -51,19 +66,29 @@
     document.getElementById("welcomeUser").innerText = "Welcome, " + loggedInUser.name;
   }
 
-  // Logout button
+  // ✅ Logout + log event
   document.getElementById("logoutBtn").addEventListener("click", function() {
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+    if (loggedInUser) {
+      let timestamp = new Date().toLocaleString();
+      logs.push({
+        user: loggedInUser.name,
+        action: "Logged out (" + loggedInUser.role + ")",
+        time: timestamp
+      });
+      localStorage.setItem("userLogs", JSON.stringify(logs));
+    }
     localStorage.removeItem("loggedInUser");
     window.location.href = "login.html";
   });
 
-  // Assign role event
+  // ✅ Assign Role Logic
   document.getElementById("assignBtn").addEventListener("click", function() {
     let email = document.getElementById("userEmail").value;
     let newRole = document.getElementById("newRole").value;
     let users = JSON.parse(localStorage.getItem("users")) || [];
-    let user = users.find(u => u.email === email);
     let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+    let user = users.find(u => u.email === email);
 
     if (user) {
       let oldRole = user.role;
@@ -80,14 +105,79 @@
       localStorage.setItem("userLogs", JSON.stringify(logs));
 
       document.getElementById("statusMessage").style.color = "green";
-      document.getElementById("statusMessage").innerText = "Role updated and logged successfully!";
+      document.getElementById("statusMessage").innerText = "Role updated successfully!";
+      renderUsers();
     } else {
       document.getElementById("statusMessage").style.color = "red";
       document.getElementById("statusMessage").innerText = "User not found!";
     }
   });
+
+  // ✅ Render all users
+  function renderUsers() {
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    let tbody = document.querySelector("#userTable tbody");
+    tbody.innerHTML = "";
+
+    if (users.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No registered users found.</td></tr>`;
+      return;
+    }
+
+    users.forEach((u, index) => {
+      let row = `<tr>
+        <td>${u.name}</td>
+        <td>${u.email}</td>
+        <td>${u.role}</td>
+        <td><button onclick="confirmRemove(${index})">Remove</button></td>
+      </tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  // ✅ Confirm before removing user
+  function confirmRemove(index) {
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    let user = users[index];
+    let confirmDelete = confirm("Are you sure you want to remove " + user.name + " (" + user.email + ")?");
+
+    if (confirmDelete) {
+      removeUser(index);
+    }
+  }
+
+  // ✅ Remove user + log action
+  function removeUser(index) {
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+    let removedUser = users[index];
+
+    // Remove from users
+    users.splice(index, 1);
+    localStorage.setItem("users", JSON.stringify(users));
+
+    // Also remove from members if applicable
+    if (removedUser.role === "Member") {
+      let members = JSON.parse(localStorage.getItem("members")) || [];
+      members = members.filter(m => m.email !== removedUser.email);
+      localStorage.setItem("members", JSON.stringify(members));
+    }
+
+    // Log removal
+    let timestamp = new Date().toLocaleString();
+    logs.push({
+      user: loggedInUser.name,
+      action: `Removed user ${removedUser.name} (${removedUser.email}, ${removedUser.role})`,
+      time: timestamp
+    });
+    localStorage.setItem("userLogs", JSON.stringify(logs));
+
+    alert("User removed successfully!");
+    renderUsers();
+  }
+
+  renderUsers();
 </script>
 
 </body>
 </html>
-
