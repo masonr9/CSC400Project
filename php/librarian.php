@@ -12,14 +12,17 @@
 
 <main>
   <section>
-    <h2>Librarian Tasks</h2>
-    <ul>
-      <li>Manage Books</li>
-      <li>Approve Reservations</li>
-      <li>Overdue Tracking</li>
-      <li>Member Management</li>
+    <h2>Librarian Dashboard</h2>
+    <p id="welcomeUser"></p>
+    <h3>Available Tasks</h3>
+    <ul class="task-list">
+      <li><a href="manage_books.php">Manage Books</a></li>
+      <li><a href="approve_reservations.php">Approve Reservations</a></li>
+      <li><a href="overdue_tracking.html">Overdue Tracking</a></li>
+      <li><a href="member_management.html">Member Management</a></li>
     </ul>
   </section>
 </main>
+
 </body>
 </html>

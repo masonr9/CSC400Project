@@ -172,3 +172,32 @@ table.res-table th {
   gap:.5rem; 
   margin-top:1rem; 
 }
+
+table.loans-table { 
+  width:100%; 
+  border-collapse:collapse; 
+  margin-top:1rem; }
+
+table.loans-table th, table.loans-table td { 
+  border:1px solid #ddd; 
+  padding:.6rem; 
+}
+
+table.loans-table th { 
+  background:#f5f5f5; 
+  text-align:left; }
+
+.status-Active { 
+  color:#1f2937; 
+  font-weight:600; 
+}
+
+.status-Returned { 
+  color:#065f46; 
+  font-weight:600; 
+}
+
+.status-Overdue { 
+  color:#b91c1c; 
+  font-weight:700; 
+}
