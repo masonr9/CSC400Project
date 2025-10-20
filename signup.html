@@ -69,8 +69,6 @@
     // Add new user with role
     let newUser = { name, email, password, role };
     users.push(newUser);
-
-    // Save users back to localStorage
     localStorage.setItem("users", JSON.stringify(users));
 
     // If the user is a Member, also add them to "members"
@@ -80,14 +78,23 @@
       localStorage.setItem("members", JSON.stringify(members));
     }
 
+    // ✅ Add signup to logs
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+    let timestamp = new Date().toLocaleString();
+    logs.push({
+      user: name,
+      action: "Registered a new account as " + role,
+      time: timestamp
+    });
+    localStorage.setItem("userLogs", JSON.stringify(logs));
+
     document.getElementById("signupMessage").style.color = "green";
     document.getElementById("signupMessage").innerText = "Registration successful! You can now login.";
 
-    // Reset the form
+    // Reset form
     document.getElementById("signupForm").reset();
   });
 </script>
 
 </body>
 </html>
-

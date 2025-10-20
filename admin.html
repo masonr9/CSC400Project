@@ -7,6 +7,25 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <script>
+  document.getElementById("logoutBtn").addEventListener("click", function() {
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+    let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+    if (loggedInUser) {
+      let timestamp = new Date().toLocaleString();
+      logs.push({
+        user: loggedInUser.name,
+        action: "Logged out (" + loggedInUser.role + ")",
+        time: timestamp
+      });
+      localStorage.setItem("userLogs", JSON.stringify(logs));
+    }
+
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+</script>
 
 <header>
   <h1>Library Management System</h1>

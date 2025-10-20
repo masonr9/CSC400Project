@@ -50,11 +50,24 @@
   }
 
   document.getElementById("logoutBtn").addEventListener("click", function() {
-    localStorage.removeItem("loggedInUser");
-    window.location.href = "login.html";
-  });
+  let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
 
-  // Example log data (you can expand this later)
+  if (loggedInUser) {
+    let timestamp = new Date().toLocaleString();
+    logs.push({
+      user: loggedInUser.name,
+      action: "Logged out (" + loggedInUser.role + ")",
+      time: timestamp
+    });
+    localStorage.setItem("userLogs", JSON.stringify(logs));
+  }
+
+  localStorage.removeItem("loggedInUser");
+  window.location.href = "login.html";
+});
+
+  // Example log data
   let logs = JSON.parse(localStorage.getItem("userLogs")) || [
     { user: "Alice", action: "Borrowed Book", time: "2025-10-05 10:45 AM" },
     { user: "Bob", action: "Returned Book", time: "2025-10-06 03:20 PM" }

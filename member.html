@@ -14,17 +14,18 @@
     <ul>
       <li><a href="index.html">Home</a></li>
       <li><a href="catalog.html">Catalog</a></li>
-      <li><a href="login.html">Login</a></li>
-      <li><a href="signup.html">Sign Up</a></li>
       <li><a href="contact.html">Contact Us</a></li>
+      <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
     </ul>
   </nav>
 </header>
 
 <main>
+  <h2 id="welcomeMessage"></h2>
+
   <section>
-    <h2>My Account</h2>
-    <ul>
+    <h3>My Account</h3>
+    <ul class="task-list">
       <li><a href="catalog.html">Search & Borrow Books</a></li>
       <li>Borrowing History</li>
       <li>Reservations</li>
@@ -32,5 +33,38 @@
     </ul>
   </section>
 </main>
+
+<script>
+  // ✅ Check login status
+  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!loggedInUser || loggedInUser.role !== "Member") {
+    // Not logged in or wrong role → redirect
+    window.location.href = "login.html";
+  } else {
+    // Show welcome message
+    document.getElementById("welcomeMessage").innerText = 
+      "Welcome, " + loggedInUser.name + " — " + loggedInUser.role;
+  }
+
+  // ✅ Logout + log event
+  document.getElementById("logoutBtn").addEventListener("click", function() {
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+
+    if (loggedInUser) {
+      let timestamp = new Date().toLocaleString();
+      logs.push({
+        user: loggedInUser.name,
+        action: "Logged out (" + loggedInUser.role + ")",
+        time: timestamp
+      });
+      localStorage.setItem("userLogs", JSON.stringify(logs));
+    }
+
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+</script>
+
 </body>
 </html>
+

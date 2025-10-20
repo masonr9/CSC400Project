@@ -7,13 +7,12 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
   
 <script>
   // Maintenance Mode check
   let config = JSON.parse(localStorage.getItem("systemConfig")) || {};
   let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-
-  // If system is in maintenance mode and current user is NOT Admin, redirect
   if (config.maintenanceMode === "on") {
     if (!loggedInUser || loggedInUser.role !== "Admin") {
       window.location.href = "maintenance.html";
@@ -52,16 +51,22 @@
 
     let email = document.getElementById("loginEmail").value;
     let password = document.getElementById("loginPassword").value;
-
-    // Get stored users from localStorage
     let storedUsers = JSON.parse(localStorage.getItem("users")) || [];
-
-    // Find if user exists
     let foundUser = storedUsers.find(user => user.email === email && user.password === password);
 
     if (foundUser) {
       // Save logged-in user
       localStorage.setItem("loggedInUser", JSON.stringify(foundUser));
+
+      // Log login event
+      let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+      let timestamp = new Date().toLocaleString();
+      logs.push({
+        user: foundUser.name,
+        action: "Logged in as " + foundUser.role,
+        time: timestamp
+      });
+      localStorage.setItem("userLogs", JSON.stringify(logs));
 
       // Redirect based on role
       if (foundUser.role === "Admin") {
@@ -76,6 +81,8 @@
     }
   });
 </script>
+
 </body>
 </html>
+
 
