@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard</title>
+  <title>System Configuration</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -16,27 +16,28 @@
       <li><a href="role_management.html">Role Management</a></li>
       <li><a href="system_config.html">System Config</a></li>
       <li><a href="logs.html">Activity Logs</a></li>
+      <li><a href="monitoring.html">Monitoring</a></li>
       <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
     </ul>
   </nav>
 </header>
 
 <main>
-  <section>
-    <h2>Admin Dashboard</h2>
-    <p id="welcomeUser"></p>
-    <h3>System Management</h3>
-    <ul class="task-list">
-      <li><a href="role_management.html">Role Management</a></li>
-      <li><a href="system_config.html">System Configuration</a></li>
-      <li><a href="logs.html">User Activity Logs</a></li>
-      <li><a href="monitoring.html">Monitoring Tools</a></li>
-    </ul>
+  <h2>System Configuration</h2>
+  <p id="welcomeUser"></p>
+
+  <section class="form-box">
+    <h3>Update System Settings</h3>
+    <label>Library Name:</label>
+    <input type="text" id="libraryName" placeholder="Enter library name">
+    <label>Max Borrow Limit:</label>
+    <input type="number" id="borrowLimit" min="1" placeholder="e.g., 5">
+    <button id="saveConfig">Save Settings</button>
+    <p id="configMessage"></p>
   </section>
 </main>
 
 <script>
-  // Verify admin login
   let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!loggedInUser || loggedInUser.role !== "Admin") {
     window.location.href = "login.html";
@@ -44,10 +45,18 @@
     document.getElementById("welcomeUser").innerText = "Welcome, " + loggedInUser.name;
   }
 
-  // Logout
   document.getElementById("logoutBtn").addEventListener("click", function() {
     localStorage.removeItem("loggedInUser");
     window.location.href = "login.html";
+  });
+
+  let config = JSON.parse(localStorage.getItem("systemConfig")) || {};
+
+  document.getElementById("saveConfig").addEventListener("click", function() {
+    config.libraryName = document.getElementById("libraryName").value;
+    config.borrowLimit = document.getElementById("borrowLimit").value;
+    localStorage.setItem("systemConfig", JSON.stringify(config));
+    document.getElementById("configMessage").innerText = "✅ Settings saved successfully!";
   });
 </script>
 
