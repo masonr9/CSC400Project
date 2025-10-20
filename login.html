@@ -7,6 +7,19 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  
+<script>
+  // Maintenance Mode check
+  let config = JSON.parse(localStorage.getItem("systemConfig")) || {};
+  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+  // If system is in maintenance mode and current user is NOT Admin, redirect
+  if (config.maintenanceMode === "on") {
+    if (!loggedInUser || loggedInUser.role !== "Admin") {
+      window.location.href = "maintenance.html";
+    }
+  }
+</script>
 
 <header>
   <h1>Library Management System</h1>

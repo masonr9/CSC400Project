@@ -43,6 +43,7 @@
 </main>
 
 <script>
+  // Verify login role
   let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!loggedInUser || loggedInUser.role !== "Admin") {
     window.location.href = "login.html";
@@ -50,22 +51,36 @@
     document.getElementById("welcomeUser").innerText = "Welcome, " + loggedInUser.name;
   }
 
+  // Logout button
   document.getElementById("logoutBtn").addEventListener("click", function() {
     localStorage.removeItem("loggedInUser");
     window.location.href = "login.html";
   });
 
+  // Assign role event
   document.getElementById("assignBtn").addEventListener("click", function() {
     let email = document.getElementById("userEmail").value;
     let newRole = document.getElementById("newRole").value;
     let users = JSON.parse(localStorage.getItem("users")) || [];
     let user = users.find(u => u.email === email);
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
 
     if (user) {
+      let oldRole = user.role;
       user.role = newRole;
       localStorage.setItem("users", JSON.stringify(users));
+
+      // Add log entry
+      let timestamp = new Date().toLocaleString();
+      logs.push({
+        user: loggedInUser.name,
+        action: `Changed role of ${user.name} (${email}) from ${oldRole} to ${newRole}`,
+        time: timestamp
+      });
+      localStorage.setItem("userLogs", JSON.stringify(logs));
+
       document.getElementById("statusMessage").style.color = "green";
-      document.getElementById("statusMessage").innerText = "Role updated for " + email + " → " + newRole;
+      document.getElementById("statusMessage").innerText = "Role updated and logged successfully!";
     } else {
       document.getElementById("statusMessage").style.color = "red";
       document.getElementById("statusMessage").innerText = "User not found!";
@@ -75,3 +90,4 @@
 
 </body>
 </html>
+

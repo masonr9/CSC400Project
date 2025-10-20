@@ -30,9 +30,24 @@
     <h3>Update System Settings</h3>
     <label>Library Name:</label>
     <input type="text" id="libraryName" placeholder="Enter library name">
+
     <label>Max Borrow Limit:</label>
     <input type="number" id="borrowLimit" min="1" placeholder="e.g., 5">
+
+    <label>Fine Per Day ($):</label>
+    <input type="number" id="fineRate" min="0" placeholder="e.g., 1.00" step="0.01">
+
+    <label>Auto Logout Timer (minutes):</label>
+    <input type="number" id="logoutTimer" min="1" placeholder="e.g., 10">
+
+    <label>Maintenance Mode:</label>
+    <select id="maintenanceMode">
+      <option value="off">Off</option>
+      <option value="on">On</option>
+    </select>
+
     <button id="saveConfig">Save Settings</button>
+    <button id="resetSystem" style="background:#e74c3c; color:white;">Reset All Data</button>
     <p id="configMessage"></p>
   </section>
 </main>
@@ -51,14 +66,46 @@
   });
 
   let config = JSON.parse(localStorage.getItem("systemConfig")) || {};
+  let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+
+  // Fill existing values if available
+  document.getElementById("libraryName").value = config.libraryName || "";
+  document.getElementById("borrowLimit").value = config.borrowLimit || "";
+  document.getElementById("fineRate").value = config.fineRate || "";
+  document.getElementById("logoutTimer").value = config.logoutTimer || "";
+  document.getElementById("maintenanceMode").value = config.maintenanceMode || "off";
 
   document.getElementById("saveConfig").addEventListener("click", function() {
     config.libraryName = document.getElementById("libraryName").value;
     config.borrowLimit = document.getElementById("borrowLimit").value;
+    config.fineRate = document.getElementById("fineRate").value;
+    config.logoutTimer = document.getElementById("logoutTimer").value;
+    config.maintenanceMode = document.getElementById("maintenanceMode").value;
+
     localStorage.setItem("systemConfig", JSON.stringify(config));
+
+    // Log configuration update
+    let timestamp = new Date().toLocaleString();
+    logs.push({
+      user: loggedInUser.name,
+      action: "Updated system configuration settings",
+      time: timestamp
+    });
+    localStorage.setItem("userLogs", JSON.stringify(logs));
+
     document.getElementById("configMessage").innerText = "✅ Settings saved successfully!";
+  });
+
+  // System Reset button
+  document.getElementById("resetSystem").addEventListener("click", function() {
+    if (confirm("⚠️ This will clear ALL data (users, books, members, logs, config). Continue?")) {
+      localStorage.clear();
+      alert("System reset complete. You’ll be redirected to signup.");
+      window.location.href = "signup.html";
+    }
   });
 </script>
 
 </body>
 </html>
+
