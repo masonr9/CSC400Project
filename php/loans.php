@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['return_id'])) { // if
   exit(); // end the request
 }
 
-// ===== Fetch the user's loans with book details =====
+// fetch the user's loans with book details
 $stmt = mysqli_prepare( // prepare a query to list user's loans with book info
   $database,
   "SELECT l.loan_id,
@@ -194,7 +194,7 @@ $today = new DateTime('today');  // create a DateTime for today's date
               <td><?= h($daysLabel) ?></td>
               <td>
                 <?php if ($status === 'Active'): ?> <!-- only allow return action for active loans -->
-                  <form method="post" action="loans.php" style="display:inline;" onsubmit="return confirm('Return this book?');"> <!-- posts back to same page -->
+                  <form method="post" action="loans.php" style="display:inline;"> <!-- posts back to same page -->
                     <input type="hidden" name="return_id" value="<?= (int)$L['loan_id'] ?>"> <!-- Hidden input with loan id -->
                     <button type="submit" class="btn-link">Return</button>
                   </form>
