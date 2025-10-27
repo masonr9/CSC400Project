@@ -242,7 +242,7 @@ table.list {
 }
 
 table.list th, table.list td { 
-  border:1px solid #ddd; 
+  border:1px solid #ddd;
   padding:.6rem; 
   vertical-align: top; 
 }
@@ -277,4 +277,8 @@ table.list th {
 
 textarea { 
   min-height: 90px; 
+}
+
+form.inline { 
+  display:inline; 
 }
