@@ -37,6 +37,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Admin') {
       <li><a href="role_management.php">Manage User Roles</a></li>
       <li><a href="system_config.php">Configure System</a></li>
       <li><a href="logs.php">View Activity Logs</a></li>
+      <li><a href="announcements.php">Create Announcements</a></li>
     </ul>
   </section>
 </main>
