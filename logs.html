@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<script src="config_display.js"></script>
 
 <header>
   <h1>Library Management System</h1>
@@ -27,6 +26,11 @@
   <h2>User Activity Logs</h2>
   <p id="welcomeUser"></p>
 
+  <!-- 🔍 Search Bar -->
+  <div class="form-box">
+    <input type="text" id="searchLogs" placeholder="Search logs by user, action, or date..." style="width:100%; padding:8px;">
+  </div>
+
   <section class="form-box">
     <h3>Activity History</h3>
     <table border="1" width="100%" id="logTable">
@@ -43,6 +47,7 @@
 </main>
 
 <script>
+  // --- Access Check ---
   let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!loggedInUser || loggedInUser.role !== "Admin") {
     window.location.href = "login.html";
@@ -50,45 +55,45 @@
     document.getElementById("welcomeUser").innerText = "Welcome, " + loggedInUser.name;
   }
 
+  // --- Logout ---
   document.getElementById("logoutBtn").addEventListener("click", function() {
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+
+  // --- Load Logs ---
   let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
-  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
 
-  if (loggedInUser) {
-    let timestamp = new Date().toLocaleString();
-    logs.push({
-      user: loggedInUser.name,
-      action: "Logged out (" + loggedInUser.role + ")",
-      time: timestamp
-    });
-    localStorage.setItem("userLogs", JSON.stringify(logs));
-  }
-
-  localStorage.removeItem("loggedInUser");
-  window.location.href = "login.html";
-});
-
-  // Example log data
-  let logs = JSON.parse(localStorage.getItem("userLogs")) || [
-    { user: "Alice", action: "Borrowed Book", time: "2025-10-05 10:45 AM" },
-    { user: "Bob", action: "Returned Book", time: "2025-10-06 03:20 PM" }
-  ];
-
-  function renderLogs() {
+  function renderLogs(filterText = "") {
     let tbody = document.querySelector("#logTable tbody");
     tbody.innerHTML = "";
-    logs.forEach(l => {
-      let row = `<tr>
-        <td>${l.user}</td>
-        <td>${l.action}</td>
-        <td>${l.time}</td>
-      </tr>`;
-      tbody.innerHTML += row;
-    });
+
+    let filteredLogs = logs.filter(l =>
+      l.user.toLowerCase().includes(filterText.toLowerCase()) ||
+      l.action.toLowerCase().includes(filterText.toLowerCase()) ||
+      l.time.toLowerCase().includes(filterText.toLowerCase())
+    );
+
+    if (filteredLogs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3">No matching logs found.</td></tr>`;
+    } else {
+      filteredLogs.forEach(l => {
+        tbody.innerHTML += `<tr>
+          <td>${l.user}</td>
+          <td>${l.action}</td>
+          <td>${l.time}</td>
+        </tr>`;
+      });
+    }
   }
+
+  document.getElementById("searchLogs").addEventListener("input", e => {
+    renderLogs(e.target.value);
+  });
 
   renderLogs();
 </script>
 
 </body>
 </html>
+

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Announcements</title>
+  <title>Manage Announcements</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,34 +13,39 @@
   <nav>
     <ul>
       <li><a href="admin.html">Dashboard</a></li>
-      <li><a href="admin_announcements.html">Announcements</a></li>
       <li><a href="logs.html">Activity Logs</a></li>
+      <li><a href="announce.html">View Announcements</a></li>
       <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
     </ul>
   </nav>
 </header>
 
 <main>
-  <h2>📢 Manage Announcements</h2>
+  <h2>Admin: Manage Announcements</h2>
+  <p id="welcomeUser"></p>
 
-  <!-- Add Announcement Form -->
-  <form id="addAnnouncementForm" class="form-box">
+  <form class="form-box" id="announcementForm">
     <label>Title:</label>
-    <input type="text" id="announcementTitle" required>
+    <input type="text" id="title" required>
 
     <label>Message:</label>
-    <textarea id="announcementMessage" required></textarea>
+    <textarea id="message" rows="4" required></textarea>
 
     <button type="submit">Add Announcement</button>
   </form>
 
-  <h3>Existing Announcements</h3>
+  <!-- 🔍 Search Bar -->
+  <div class="form-box">
+    <input type="text" id="searchAnnouncements" placeholder="Search announcements..." style="width:100%; padding:8px;">
+  </div>
+
+  <h3>📢 Current Announcements</h3>
   <table border="1" width="100%" id="announcementTable">
     <thead>
       <tr>
         <th>Title</th>
         <th>Message</th>
-        <th>Date</th>
+        <th>Posted On</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -49,87 +54,91 @@
 </main>
 
 <script>
-  // Check admin login
+  // --- Auth Check ---
   let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!loggedInUser || loggedInUser.role !== "Admin") {
     window.location.href = "login.html";
+  } else {
+    document.getElementById("welcomeUser").innerText = "Welcome, " + loggedInUser.name + " (Admin)";
   }
 
-  // Logout
   document.getElementById("logoutBtn").addEventListener("click", function() {
     localStorage.removeItem("loggedInUser");
     window.location.href = "login.html";
   });
 
-  // Load announcements
   let announcements = JSON.parse(localStorage.getItem("announcements")) || [];
 
-  function saveAnnouncements() {
-    localStorage.setItem("announcements", JSON.stringify(announcements));
-  }
-
-  function renderAnnouncements() {
+  function renderAnnouncements(filterText = "") {
     let tbody = document.querySelector("#announcementTable tbody");
     tbody.innerHTML = "";
-    if (announcements.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No announcements found.</td></tr>`;
-      return;
-    }
-    announcements.forEach((a, index) => {
-      let row = `<tr>
-        <td><input type="text" value="${a.title}" id="title_${index}" class="edit-input"></td>
-        <td><textarea id="msg_${index}" class="edit-input">${a.message}</textarea></td>
-        <td>${a.date}</td>
-        <td>
-          <button onclick="updateAnnouncement(${index})">Save</button>
-          <button onclick="deleteAnnouncement(${index})">Delete</button>
-        </td>
-      </tr>`;
-      tbody.innerHTML += row;
-    });
-  }
 
-  function updateAnnouncement(index) {
-    let newTitle = document.getElementById("title_" + index).value.trim();
-    let newMsg = document.getElementById("msg_" + index).value.trim();
-    if (newTitle === "" || newMsg === "") {
-      alert("Fields cannot be empty!");
-      return;
-    }
-    announcements[index].title = newTitle;
-    announcements[index].message = newMsg;
-    saveAnnouncements();
-    alert("Announcement updated!");
-    renderAnnouncements();
-  }
+    let filtered = announcements.filter(a =>
+      a.title.toLowerCase().includes(filterText.toLowerCase()) ||
+      a.message.toLowerCase().includes(filterText.toLowerCase()) ||
+      a.time.toLowerCase().includes(filterText.toLowerCase())
+    );
 
-  function deleteAnnouncement(index) {
-    let confirmDelete = confirm("Are you sure you want to remove this announcement?");
-    if (confirmDelete) {
-      announcements.splice(index, 1);
-      saveAnnouncements();
-      renderAnnouncements();
-      alert("Announcement removed!");
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4">No announcements found.</td></tr>`;
+    } else {
+      filtered.forEach((a, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${a.title}</td>
+            <td>${a.message}</td>
+            <td>${a.time}</td>
+            <td>
+              <button onclick="editAnnouncement(${index})">Edit</button>
+              <button onclick="deleteAnnouncement(${index})">Remove</button>
+            </td>
+          </tr>`;
+      });
     }
   }
 
-  // Add announcement
-  document.getElementById("addAnnouncementForm").addEventListener("submit", function(e) {
+  // Add Announcement
+  document.getElementById("announcementForm").addEventListener("submit", e => {
     e.preventDefault();
-    let title = document.getElementById("announcementTitle").value.trim();
-    let message = document.getElementById("announcementMessage").value.trim();
+    let title = document.getElementById("title").value.trim();
+    let message = document.getElementById("message").value.trim();
+    let timestamp = new Date().toLocaleString();
 
-    if (title === "" || message === "") {
-      alert("All fields are required!");
-      return;
-    }
+    if (!title || !message) return alert("Please fill out all fields.");
 
-    let date = new Date().toLocaleString();
-    announcements.push({ title, message, date });
-    saveAnnouncements();
+    announcements.push({ title, message, time: timestamp });
+    localStorage.setItem("announcements", JSON.stringify(announcements));
+
+    document.getElementById("announcementForm").reset();
     renderAnnouncements();
-    e.target.reset();
-    alert("Announcement added!");
+  });
+
+  // Edit
+  function editAnnouncement(index) {
+    let item = announcements[index];
+    let newTitle = prompt("Edit Title:", item.title);
+    let newMessage = prompt("Edit Message:", item.message);
+
+    if (newTitle !== null && newMessage !== null) {
+      announcements[index].title = newTitle;
+      announcements[index].message = newMessage;
+      localStorage.setItem("announcements", JSON.stringify(announcements));
+      renderAnnouncements();
+    }
+  }
+
+  // Delete
+  function deleteAnnouncement(index) {
+    if (confirm("Are you sure you want to remove this announcement?")) {
+      announcements.splice(index, 1);
+      localStorage.setItem("announcements", JSON.stringify(announcements));
+      renderAnnouncements();
+    }
+  }
+
+  // --- Search ---
+  document.getElementById("searchAnnouncements").addEventListener("input", e => {
+    renderAnnouncements(e.target.value);
   });
 
   renderAnnouncements();

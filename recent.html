@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recent Events</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Library Management System</h1>
+  <nav>
+    <ul>
+      <li><a href="admin.html">Admin Menu</a></li>
+      <li><a href="role_management.html">Roles</a></li>
+      <li><a href="system_config.html">Settings</a></li>
+      <li><a href="logs.html">Logs</a></li>
+      <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h2>📊 Admin Dashboard</h2>
+  <p id="welcomeUser"></p>
+
+  <!-- Quick Stats Section -->
+  <section class="dashboard-cards">
+    <div class="stat-card">
+      <h3 id="totalUsers">0</h3>
+      <p>Total Users</p>
+    </div>
+    <div class="stat-card">
+      <h3 id="totalBooks">0</h3>
+      <p>Total Books</p>
+    </div>
+    <div class="stat-card">
+      <h3 id="borrowedBooks">0</h3>
+      <p>Borrowed Books</p>
+    </div>
+    <div class="stat-card">
+      <h3 id="overdueBooks">0</h3>
+      <p>Overdue Books</p>
+    </div>
+  </section>
+
+  <!-- Recent Activity Feed -->
+  <section class="form-box">
+    <h3>🕓 Recent Activity</h3>
+    <ul id="recentActivity" class="activity-feed"></ul>
+  </section>
+
+  <!-- System Clock -->
+  <section class="form-box">
+    <h3>⏰ System Time</h3>
+    <p id="clock" style="font-size: 1.5em; font-weight: bold;"></p>
+  </section>
+</main>
+
+<script>
+  // --- Access Control ---
+  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!loggedInUser || loggedInUser.role !== "Admin") {
+    window.location.href = "login.html";
+  } else {
+    document.getElementById("welcomeUser").innerText = "Welcome, " + loggedInUser.name + " (Admin)";
+  }
+
+  // --- Logout ---
+  document.getElementById("logoutBtn").addEventListener("click", function() {
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+    let timestamp = new Date().toLocaleString();
+    logs.push({ user: loggedInUser.name, action: "Logged out (Admin)", time: timestamp });
+    localStorage.setItem("userLogs", JSON.stringify(logs));
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+
+  // --- Dynamic Library Name ---
+  let config = JSON.parse(localStorage.getItem("systemConfig")) || {};
+  if (config.libraryName) {
+    document.querySelector("header h1").innerText = config.libraryName;
+  }
+
+  // --- Quick Stats ---
+  function updateStats() {
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    let books = JSON.parse(localStorage.getItem("books")) || [];
+    let borrowed = JSON.parse(localStorage.getItem("borrowedBooks")) || [];
+    let overdue = borrowed.filter(b => new Date(b.dueDate) < new Date()).length;
+
+    document.getElementById("totalUsers").innerText = users.length;
+    document.getElementById("totalBooks").innerText = books.length;
+    document.getElementById("borrowedBooks").innerText = borrowed.length;
+    document.getElementById("overdueBooks").innerText = overdue;
+  }
+
+  updateStats();
+
+  // --- Recent Activity Feed ---
+  function loadRecentActivity() {
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+    let list = document.getElementById("recentActivity");
+    list.innerHTML = "";
+
+    if (logs.length === 0) {
+      list.innerHTML = "<li>No recent activity yet.</li>";
+      return;
+    }
+
+    let recent = logs.slice(-5).reverse();
+    recent.forEach(log => {
+      let li = document.createElement("li");
+      li.textContent = `${log.time} — ${log.user}: ${log.action}`;
+      list.appendChild(li);
+    });
+  }
+
+  loadRecentActivity();
+
+  // --- Live Clock ---
+  function updateClock() {
+    let now = new Date();
+    document.getElementById("clock").innerText = now.toLocaleString();
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+</script>
+
+<style>
+  .dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: #3498db;
+    color: white;
+    text-align: center;
+    padding: 1.2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  .stat-card h3 {
+    font-size: 2rem;
+    margin: 0;
+  }
+  .activity-feed {
+    list-style: none;
+    padding: 0;
+  }
+  .activity-feed li {
+    border-bottom: 1px solid #ddd;
+    padding: 8px 0;
+  }
+</style>
+
+</body>
+</html>
