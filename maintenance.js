@@ -1,42 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  
-<script src="config_display.js"></script>
 
-<header>
-  <h1>Library Management System</h1>
-  <nav>
-    <ul>
-      <li><a href="index.html">Home</a></li>
-      <li><a href="catalog.html">Catalog</a></li>
-      <li><a href="login.html">Login</a></li>
-      <li><a href="signup.html">Sign Up</a></li>
-       <li><a href="announcements.html">Announcements</a></li>
-      <li><a href="contact.html">Contact Us</a></li>
-    </ul>
-  </nav>
-</header>
-
-<main>
-  <form class="form-box" id="loginForm">
-    <h2>Login to Your Account</h2>
-    <label>Email:</label>
-    <input type="email" id="loginEmail" required>
-    <label>Password:</label>
-    <input type="password" id="loginPassword" required>
-    <button type="submit">Login</button>
-  </form>
-  <p id="loginMessage" style="text-align:center;color:red;"></p>
-</main>
-
-<script>
   document.getElementById("loginForm").addEventListener("submit", function(event) {
     event.preventDefault();
 
@@ -59,6 +21,15 @@
       });
       localStorage.setItem("userLogs", JSON.stringify(logs));
 
+      // Maintenance mode check
+      let config = JSON.parse(localStorage.getItem("systemConfig")) || {};
+      if (config.maintenanceMode === "on" && foundUser.role !== "Admin") {
+        alert("The site is under maintenance. Only Admins can log in.");
+        localStorage.removeItem("loggedInUser"); // clear login
+        window.location.href = "maintenance.html";
+        return;
+      }
+
       // Redirect based on role
       if (foundUser.role === "Admin") {
         window.location.href = "admin.html";
@@ -67,13 +38,13 @@
       } else {
         window.location.href = "member.html";
       }
+
     } else {
       document.getElementById("loginMessage").innerText = "Invalid email or password!";
     }
   });
-</script>
 
-</body>
-</html>
+
+
 
 

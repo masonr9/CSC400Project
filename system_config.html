@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Configuration</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1 id="libraryHeader">Library Management System</h1>
+  <nav>
+    <ul>
+      <li><a href="admin.html">Dashboard</a></li>
+      <li><a href="role_management.html">Role Management</a></li>
+      <li><a href="system_config.html">System Config</a></li>
+      <li><a href="logs.html">Activity Logs</a></li>
+      <li><a href="monitoring.html">Monitoring</a></li>
+      <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h2>System Configuration</h2>
+  <p id="welcomeUser"></p>
+
+  <section class="form-box">
+    <h3>Update System Settings</h3>
+
+    <label for="libraryName">Library Name:</label>
+    <input type="text" id="libraryName" placeholder="Enter library name">
+
+    <label for="borrowLimit">Max Borrow Limit:</label>
+    <input type="number" id="borrowLimit" min="1" placeholder="e.g., 5">
+
+    <label for="fineRate">Fine Per Day ($):</label>
+    <input type="number" id="fineRate" min="0" placeholder="e.g., 1.00" step="0.01">
+
+    <label for="logoutTimer">Auto Logout Timer (minutes):</label>
+    <input type="number" id="logoutTimer" min="1" placeholder="e.g., 10">
+
+    <label for="maintenanceMode">Maintenance Mode:</label>
+    <select id="maintenanceMode">
+      <option value="off">Off</option>
+      <option value="on">On</option>
+    </select>
+
+    <div class="button-group">
+      <button id="saveConfig">💾 Save Settings</button>
+      <button id="resetSettings" style="background:#f39c12; color:white;">🔄 Reset Settings</button>
+      <button id="resetSystem" style="background:#e74c3c; color:white;">⚠️ Reset All Data</button>
+    </div>
+
+    <p id="configMessage"></p>
+  </section>
+</main>
+
+<script>
+  // --- Access Check ---
+  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!loggedInUser || loggedInUser.role !== "Admin") {
+    window.location.href = "login.html";
+  } else {
+    document.getElementById("welcomeUser").innerText = "Welcome, " + loggedInUser.name;
+  }
+
+  // --- Logout ---
+  document.getElementById("logoutBtn").addEventListener("click", function() {
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+
+  // --- Load Existing Config ---
+  let config = JSON.parse(localStorage.getItem("systemConfig")) || {};
+  let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+
+  // Prefill form fields
+  document.getElementById("libraryName").value = config.libraryName || "";
+  document.getElementById("borrowLimit").value = config.borrowLimit || "";
+  document.getElementById("fineRate").value = config.fineRate || "";
+  document.getElementById("logoutTimer").value = config.logoutTimer || "";
+  document.getElementById("maintenanceMode").value = config.maintenanceMode || "off";
+
+  document.getElementById("libraryHeader").innerText = config.libraryName || "Library Management System";
+
+  // --- Save Settings ---
+  document.getElementById("saveConfig").addEventListener("click", function() {
+    config.libraryName = document.getElementById("libraryName").value.trim();
+    config.borrowLimit = document.getElementById("borrowLimit").value;
+    config.fineRate = document.getElementById("fineRate").value;
+    config.logoutTimer = document.getElementById("logoutTimer").value;
+    config.maintenanceMode = document.getElementById("maintenanceMode").value;
+
+    localStorage.setItem("systemConfig", JSON.stringify(config));
+
+    // Add to logs
+    let timestamp = new Date().toLocaleString();
+    logs.push({
+      user: loggedInUser.name,
+      action: "Updated system configuration (Library: " + (config.libraryName || "N/A") + ")",
+      time: timestamp
+    });
+    localStorage.setItem("userLogs", JSON.stringify(logs));
+
+    document.getElementById("configMessage").innerText = "✅ Settings saved successfully!";
+    document.getElementById("libraryHeader").innerText = config.libraryName || "Library Management System";
+  });
+
+  // --- Reset Only Config ---
+  document.getElementById("resetSettings").addEventListener("click", function() {
+    if (confirm("Are you sure you want to reset all system settings to default?")) {
+      // Remove only systemConfig
+      localStorage.removeItem("systemConfig");
+      config = {};
+
+      // Clear form fields
+      document.getElementById("libraryName").value = "";
+      document.getElementById("borrowLimit").value = "";
+      document.getElementById("fineRate").value = "";
+      document.getElementById("logoutTimer").value = "";
+      document.getElementById("maintenanceMode").value = "off";
+      document.getElementById("libraryHeader").innerText = "Library Management System";
+
+      // Log reset
+      let timestamp = new Date().toLocaleString();
+      logs.push({
+        user: loggedInUser.name,
+        action: "Reset system configuration settings to default",
+        time: timestamp
+      });
+      localStorage.setItem("userLogs", JSON.stringify(logs));
+
+      document.getElementById("configMessage").innerText = "⚙️ System settings have been reset to default!";
+    }
+  });
+
+  // --- Reset Entire System ---
+  document.getElementById("resetSystem").addEventListener("click", function() {
+    if (confirm("⚠️ This will clear ALL data (users, books, members, logs, config). Continue?")) {
+      localStorage.clear();
+      alert("System reset complete. Redirecting to signup page...");
+      window.location.href = "signup.html";
+    }
+  });
+</script>
+
+</body>
+</html>
+
+

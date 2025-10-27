@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoring Tools</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Library Management System</h1>
+  <nav>
+    <ul>
+      <li><a href="admin.html">Dashboard</a></li>
+      <li><a href="role_management.html">Role Management</a></li>
+      <li><a href="system_config.html">System Config</a></li>
+      <li><a href="logs.html">Activity Logs</a></li>
+      <li><a href="monitoring.html">Monitoring</a></li>
+      <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h2>Monitoring Tools</h2>
+  <p id="welcomeUser"></p>
+
+  <section class="form-box">
+    <h3>System Overview</h3>
+    <ul class="task-list">
+      <li>Total Users: <span id="userCount"></span></li>
+      <li>Total Members: <span id="memberCount"></span></li>
+      <li>Total Books: <span id="bookCount"></span></li>
+    </ul>
+  </section>
+</main>
+
+<script>
+  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!loggedInUser || loggedInUser.role !== "Admin") {
+    window.location.href = "login.html";
+  } else {
+    document.getElementById("welcomeUser").innerText = "Welcome, " + loggedInUser.name;
+  }
+
+  document.getElementById("logoutBtn").addEventListener("click", function() {
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+
+  // Fetch counts
+  let users = JSON.parse(localStorage.getItem("users")) || [];
+  let members = JSON.parse(localStorage.getItem("members")) || [];
+  let books = JSON.parse(localStorage.getItem("books")) || [];
+
+  document.getElementById("userCount").innerText = users.length;
+  document.getElementById("memberCount").innerText = members.length;
+  document.getElementById("bookCount").innerText = books.length;
+</script>
+
+</body>
+</html>

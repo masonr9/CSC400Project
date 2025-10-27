@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Member Management</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<script src="config_display.js"></script>
+
+<header>
+  <h1>Library Management System</h1>
+  <nav>
+    <ul>
+      <li><a href="librarian.html">Dashboard</a></li>
+      <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h2>Member Management</h2>
+
+  <form id="memberForm" class="form-box">
+    <label>Member Name:</label>
+    <input type="text" id="memberName" required>
+    <label>Email:</label>
+    <input type="email" id="memberEmail" required>
+    <button type="submit">Add Member</button>
+  </form>
+
+  <h3>Search Members</h3>
+  <input 
+    type="text" 
+    id="searchInput" 
+    placeholder="Search by name or email..." 
+    style="width:100%; padding:10px; border:1px solid #ccc; border-radius:5px; margin-bottom:15px;"
+  >
+
+  <h3>Registered Members</h3>
+  <table border="1" width="100%" id="memberTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Remove</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</main>
+
+<script>
+  // Check if logged in and is a Librarian
+  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!loggedInUser || loggedInUser.role !== "Librarian") {
+    window.location.href = "login.html";
+  }
+
+  // Logout functionality
+  document.getElementById("logoutBtn").addEventListener("click", function() {
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+
+  // Load existing data
+  let members = JSON.parse(localStorage.getItem("members")) || [];
+  let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+
+  // Render members table
+  function renderMembers(filter = "") {
+    let tbody = document.querySelector("#memberTable tbody");
+    tbody.innerHTML = "";
+
+    let filteredMembers = members.filter(m => 
+      m.name.toLowerCase().includes(filter.toLowerCase()) ||
+      m.email.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    if (filteredMembers.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">No members found.</td></tr>`;
+      return;
+    }
+
+    filteredMembers.forEach((m, index) => {
+      let row = `<tr>
+        <td>${m.name}</td>
+        <td>${m.email}</td>
+        <td><button onclick="confirmRemove(${index})">Remove</button></td>
+      </tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  // Confirm remove member
+  function confirmRemove(index) {
+    let member = members[index];
+    let confirmDelete = confirm("Are you sure you want to remove " + member.name + "?");
+    if (confirmDelete) {
+      removeMember(index);
+    }
+  }
+
+  // Remove member and log action
+  function removeMember(index) {
+    let member = members[index];
+    members.splice(index, 1);
+    localStorage.setItem("members", JSON.stringify(members));
+    renderMembers(document.getElementById("searchInput").value);
+    alert("Member removed successfully.");
+
+    // Add log entry
+    let timestamp = new Date().toLocaleString();
+    logs.push({
+      user: loggedInUser.name,
+      action: `Removed member ${member.name} (${member.email})`,
+      time: timestamp
+    });
+    localStorage.setItem("userLogs", JSON.stringify(logs));
+  }
+
+  // Add member and log action
+  document.getElementById("memberForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    let name = document.getElementById("memberName").value;
+    let email = document.getElementById("memberEmail").value;
+
+    members.push({ name, email });
+    localStorage.setItem("members", JSON.stringify(members));
+    renderMembers(document.getElementById("searchInput").value);
+    e.target.reset();
+    alert("New member added successfully.");
+
+    // Add log entry
+    let timestamp = new Date().toLocaleString();
+    logs.push({
+      user: loggedInUser.name,
+      action: `Added new member ${name} (${email})`,
+      time: timestamp
+    });
+    localStorage.setItem("userLogs", JSON.stringify(logs));
+  });
+
+  // Search filter
+  document.getElementById("searchInput").addEventListener("input", function() {
+    renderMembers(this.value);
+  });
+
+  // Initial load
+  renderMembers();
+</script>
+
+</body>
+</html>
+
+
+

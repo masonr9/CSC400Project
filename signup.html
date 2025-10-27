@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<script src="config_display.js"></script>
+<script src="maintence.js"></script>
 
 <header>
   <h1>Library Management System</h1>
@@ -16,22 +18,86 @@
       <li><a href="catalog.html">Catalog</a></li>
       <li><a href="login.html">Login</a></li>
       <li><a href="signup.html">Sign Up</a></li>
+       <li><a href="announcements.html">Announcements</a></li>
       <li><a href="contact.html">Contact Us</a></li>
     </ul>
   </nav>
 </header>
 
 <main>
-  <form class="form-box">
+  <form class="form-box" id="signupForm">
     <h2>Create Your Library Account</h2>
+    
     <label>Full Name:</label>
-    <input type="text" required>
+    <input type="text" id="fullName" required>
+    
     <label>Email:</label>
-    <input type="email" required>
+    <input type="email" id="email" required>
+    
     <label>Password:</label>
-    <input type="password" required>
+    <input type="password" id="password" required>
+    
+    <label>Role:</label>
+    <select id="role" required>
+      <option value="">-- Select Role --</option>
+      <option value="Admin">Admin</option>
+      <option value="Librarian">Librarian</option>
+      <option value="Member">Member</option>
+    </select>
+    
     <button type="submit">Register</button>
   </form>
+  <p id="signupMessage" style="text-align:center;color:green;"></p>
 </main>
+
+<script>
+  document.getElementById("signupForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    let name = document.getElementById("fullName").value;
+    let email = document.getElementById("email").value;
+    let password = document.getElementById("password").value;
+    let role = document.getElementById("role").value;
+
+    // Load existing users or empty list
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+
+    // Prevent duplicate emails
+    if (users.find(user => user.email === email)) {
+      document.getElementById("signupMessage").style.color = "red";
+      document.getElementById("signupMessage").innerText = "Email already registered!";
+      return;
+    }
+
+    // Add new user with role
+    let newUser = { name, email, password, role };
+    users.push(newUser);
+    localStorage.setItem("users", JSON.stringify(users));
+
+    // If the user is a Member, also add them to "members"
+    if (role === "Member") {
+      let members = JSON.parse(localStorage.getItem("members")) || [];
+      members.push({ name, email });
+      localStorage.setItem("members", JSON.stringify(members));
+    }
+
+    // ✅ Add signup to logs
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+    let timestamp = new Date().toLocaleString();
+    logs.push({
+      user: name,
+      action: "Registered a new account as " + role,
+      time: timestamp
+    });
+    localStorage.setItem("userLogs", JSON.stringify(logs));
+
+    document.getElementById("signupMessage").style.color = "green";
+    document.getElementById("signupMessage").innerText = "Registration successful! You can now login.";
+
+    // Reset form
+    document.getElementById("signupForm").reset();
+  });
+</script>
+
 </body>
 </html>

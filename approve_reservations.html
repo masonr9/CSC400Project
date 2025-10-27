@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Approve Reservations</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Library Management System</h1>
+  <nav>
+    <ul>
+      <li><a href="librarian.html"> Librarian Dashboard</a></li>
+      <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h2>Approve Reservations</h2>
+
+  <table border="1" width="100%" id="reservationTable">
+    <thead>
+      <tr>
+        <th>Member</th>
+        <th>Book</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</main>
+
+<script>
+  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!loggedInUser || loggedInUser.role !== "Librarian") {
+    window.location.href = "login.html";
+  }
+  document.getElementById("logoutBtn").addEventListener("click", function() {
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+
+  let reservations = JSON.parse(localStorage.getItem("reservations")) || [
+  ];
+
+  function renderReservations() {
+    let tbody = document.querySelector("#reservationTable tbody");
+    tbody.innerHTML = "";
+    reservations.forEach((r, index) => {
+      let row = `<tr>
+        <td>${r.member}</td>
+        <td>${r.book}</td>
+        <td>
+          ${r.status === "Pending" 
+            ? `<button onclick="approve(${index})">Approve</button>` 
+            : r.status}
+        </td>
+      </tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  function approve(index) {
+    reservations[index].status = "Approved";
+    localStorage.setItem("reservations", JSON.stringify(reservations));
+    renderReservations();
+  }
+
+  renderReservations();
+</script>
+
+</body>
+</html>
+

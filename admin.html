@@ -7,30 +7,73 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <script src="config_display.js"></script>
+  <script>
+  document.getElementById("logoutBtn").addEventListener("click", function() {
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+    let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+    if (loggedInUser) {
+      let timestamp = new Date().toLocaleString();
+      logs.push({
+        user: loggedInUser.name,
+        action: "Logged out (" + loggedInUser.role + ")",
+        time: timestamp
+      });
+      localStorage.setItem("userLogs", JSON.stringify(logs));
+    }
+
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+</script>
 
 <header>
   <h1>Library Management System</h1>
   <nav>
     <ul>
-      <li><a href="index.html">Home</a></li>
+      <li><a href="admin.html">Dashboard</a></li>
+      <li><a href="role_management.html">Role Management</a></li>
+      <li><a href="system_config.html">System Config</a></li>
+      <li><a href="logs.html">Activity Logs</a></li>
       <li><a href="catalog.html">Catalog</a></li>
-      <li><a href="login.html">Login</a></li>
-      <li><a href="signup.html">Sign Up</a></li>
-      <li><a href="contact.html">Contact Us</a></li>
+       <li><a href="announcements.html">Announcements</a></li>
+      <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
     </ul>
   </nav>
 </header>
 
 <main>
   <section>
-    <h2>System Management</h2>
-    <ul>
-      <li>Role Management</li>
-      <li>System Configuration</li>
-      <li>User Activity Logs</li>
-      <li>Monitoring Tools</li>
+    <h2>Admin Dashboard</h2>
+    <p id="welcomeUser"></p>
+    <h3>System Management</h3>
+    <ul class="task-list">
+      <li><a href="role_management.html">Role Management</a></li>
+      <li><a href="system_config.html">System Configuration</a></li>
+      <li><a href="logs.html">User Activity Logs</a></li>
+      <li><a href="monitoring.html">Monitoring Tools</a></li>
+       <li><a href="admin_announcements.html">Create Announcements</a></li>
+       <li><a href="recent.html">Recent Activity Feed</a></li>
     </ul>
   </section>
 </main>
+
+<script>
+  // Verify admin login
+  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!loggedInUser || loggedInUser.role !== "Admin") {
+    window.location.href = "login.html";
+  } else {
+    document.getElementById("welcomeUser").innerText = "Welcome, " + loggedInUser.name;
+  }
+
+  // Logout
+  document.getElementById("logoutBtn").addEventListener("click", function() {
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+</script>
+
 </body>
 </html>

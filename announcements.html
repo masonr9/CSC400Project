@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Announcements</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Library Management System</h1>
+  <nav>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="catalog.html">Catalog</a></li>
+      <li><a href="announcements.html">Announcements</a></li>
+      <li><a href="login.html">Login</a></li>
+      <li><a href="signup.html">Sign Up</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h2>📢 Library Announcements</h2>
+  <div id="announcementList"></div>
+</main>
+
+<script>
+  // Load announcements
+  let announcements = JSON.parse(localStorage.getItem("announcements")) || [];
+  let container = document.getElementById("announcementList");
+
+  if (announcements.length === 0) {
+    container.innerHTML = "<p>No announcements at the moment.</p>";
+  } else {
+    announcements.forEach(a => {
+      let card = document.createElement("div");
+      card.classList.add("announcement-card");
+      card.innerHTML = `
+        <h3>${a.title}</h3>
+        <p>${a.message}</p>
+        <small>Posted: ${a.date}</small>
+      `;
+      container.appendChild(card);
+    });
+  }
+</script>
+
+</body>
+</html>

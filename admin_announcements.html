@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Announcements</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Library Management System</h1>
+  <nav>
+    <ul>
+      <li><a href="admin.html">Dashboard</a></li>
+      <li><a href="logs.html">Activity Logs</a></li>
+      <li><a href="announce.html">View Announcements</a></li>
+      <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h2>Admin: Manage Announcements</h2>
+  <p id="welcomeUser"></p>
+
+  <form class="form-box" id="announcementForm">
+    <label>Title:</label>
+    <input type="text" id="title" required>
+
+    <label>Message:</label>
+    <textarea id="message" rows="4" required></textarea>
+
+    <button type="submit">Add Announcement</button>
+  </form>
+
+  <!-- 🔍 Search Bar -->
+  <div class="form-box">
+    <input type="text" id="searchAnnouncements" placeholder="Search announcements..." style="width:100%; padding:8px;">
+  </div>
+
+  <h3>📢 Current Announcements</h3>
+  <table border="1" width="100%" id="announcementTable">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Message</th>
+        <th>Posted On</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</main>
+
+<script>
+  // --- Auth Check ---
+  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!loggedInUser || loggedInUser.role !== "Admin") {
+    window.location.href = "login.html";
+  } else {
+    document.getElementById("welcomeUser").innerText = "Welcome, " + loggedInUser.name + " (Admin)";
+  }
+
+  document.getElementById("logoutBtn").addEventListener("click", function() {
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+
+  let announcements = JSON.parse(localStorage.getItem("announcements")) || [];
+
+  function renderAnnouncements(filterText = "") {
+    let tbody = document.querySelector("#announcementTable tbody");
+    tbody.innerHTML = "";
+
+    let filtered = announcements.filter(a =>
+      a.title.toLowerCase().includes(filterText.toLowerCase()) ||
+      a.message.toLowerCase().includes(filterText.toLowerCase()) ||
+      a.time.toLowerCase().includes(filterText.toLowerCase())
+    );
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4">No announcements found.</td></tr>`;
+    } else {
+      filtered.forEach((a, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${a.title}</td>
+            <td>${a.message}</td>
+            <td>${a.time}</td>
+            <td>
+              <button onclick="editAnnouncement(${index})">Edit</button>
+              <button onclick="deleteAnnouncement(${index})">Remove</button>
+            </td>
+          </tr>`;
+      });
+    }
+  }
+
+  // Add Announcement
+  document.getElementById("announcementForm").addEventListener("submit", e => {
+    e.preventDefault();
+    let title = document.getElementById("title").value.trim();
+    let message = document.getElementById("message").value.trim();
+    let timestamp = new Date().toLocaleString();
+
+    if (!title || !message) return alert("Please fill out all fields.");
+
+    announcements.push({ title, message, time: timestamp });
+    localStorage.setItem("announcements", JSON.stringify(announcements));
+
+    document.getElementById("announcementForm").reset();
+    renderAnnouncements();
+  });
+
+  // Edit
+  function editAnnouncement(index) {
+    let item = announcements[index];
+    let newTitle = prompt("Edit Title:", item.title);
+    let newMessage = prompt("Edit Message:", item.message);
+
+    if (newTitle !== null && newMessage !== null) {
+      announcements[index].title = newTitle;
+      announcements[index].message = newMessage;
+      localStorage.setItem("announcements", JSON.stringify(announcements));
+      renderAnnouncements();
+    }
+  }
+
+  // Delete
+  function deleteAnnouncement(index) {
+    if (confirm("Are you sure you want to remove this announcement?")) {
+      announcements.splice(index, 1);
+      localStorage.setItem("announcements", JSON.stringify(announcements));
+      renderAnnouncements();
+    }
+  }
+
+  // --- Search ---
+  document.getElementById("searchAnnouncements").addEventListener("input", e => {
+    renderAnnouncements(e.target.value);
+  });
+
+  renderAnnouncements();
+</script>
+
+</body>
+</html>

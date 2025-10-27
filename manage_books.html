@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Books</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Library Management System</h1>
+  <nav>
+    <ul>
+      <li><a href="librarian.html">Librarian Dashboard</a></li>
+      <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h2>Manage Books</h2>
+
+  <!--  Add New Book Form -->
+  <form id="bookForm" class="form-box">
+    <label>Book Title:</label>
+    <input type="text" id="bookTitle" required>
+    <label>Author:</label>
+    <input type="text" id="bookAuthor" required>
+    <button type="submit">Add Book</button>
+  </form>
+
+  <!--  Search Feature -->
+  <div class="form-box" style="margin-top: 20px;">
+    <label for="searchInput"><strong>Search Books:</strong></label>
+    <input type="text" id="searchInput" placeholder="Type to search by title or author...">
+  </div>
+
+  <h3>Book Catalog</h3>
+  <table border="1" width="100%" id="bookTable">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</main>
+
+<script>
+  //  Auth check
+  let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!loggedInUser || loggedInUser.role !== "Librarian") {
+    window.location.href = "login.html";
+  }
+
+  //  Logout with logging
+  document.getElementById("logoutBtn").addEventListener("click", function() {
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+    if (loggedInUser) {
+      let timestamp = new Date().toLocaleString();
+      logs.push({
+        user: loggedInUser.name,
+        action: "Logged out (" + loggedInUser.role + ")",
+        time: timestamp
+      });
+      localStorage.setItem("userLogs", JSON.stringify(logs));
+    }
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  });
+
+  //  Book Data
+  let books = JSON.parse(localStorage.getItem("books")) || [];
+
+  //  Render Books (with optional filter)
+  function renderBooks(filterText = "") {
+    let tbody = document.querySelector("#bookTable tbody");
+    tbody.innerHTML = "";
+
+    // Filter books if search text entered
+    let filteredBooks = books.filter(book =>
+      book.title.toLowerCase().includes(filterText.toLowerCase()) ||
+      book.author.toLowerCase().includes(filterText.toLowerCase())
+    );
+
+    if (filteredBooks.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">No books found</td></tr>`;
+      return;
+    }
+
+    filteredBooks.forEach((book, index) => {
+      let row = `<tr>
+        <td>${book.title}</td>
+        <td>${book.author}</td>
+        <td>
+          <button onclick="editBook(${index})">Edit</button>
+          <button onclick="confirmRemoveBook(${index})">Remove</button>
+        </td>
+      </tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  //  Search Feature (Live Filter)
+  document.getElementById("searchInput").addEventListener("input", function() {
+    let filterText = this.value.trim();
+    renderBooks(filterText);
+  });
+
+  //  Confirm remove
+  function confirmRemoveBook(index) {
+    let book = books[index];
+    let confirmDelete = confirm(`Are you sure you want to remove "${book.title}" by ${book.author}?`);
+    if (confirmDelete) {
+      removeBook(index);
+    }
+  }
+
+  //  Remove book + log
+  function removeBook(index) {
+    let removedBook = books[index];
+    books.splice(index, 1);
+    localStorage.setItem("books", JSON.stringify(books));
+
+    // Log removal
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+    let timestamp = new Date().toLocaleString();
+    logs.push({
+      user: loggedInUser.name,
+      action: `Removed book: "${removedBook.title}" by ${removedBook.author}`,
+      time: timestamp
+    });
+    localStorage.setItem("userLogs", JSON.stringify(logs));
+
+    alert("Book removed successfully!");
+    renderBooks(document.getElementById("searchInput").value);
+  }
+
+  //  Edit book
+  function editBook(index) {
+    let book = books[index];
+    let newTitle = prompt("Enter new title:", book.title);
+    if (newTitle === null) return;
+    let newAuthor = prompt("Enter new author:", book.author);
+    if (newAuthor === null) return;
+
+    let confirmEdit = confirm(`Save changes?\n\nOld: "${book.title}" by ${book.author}\nNew: "${newTitle}" by ${newAuthor}`);
+    if (!confirmEdit) return;
+
+    // Update data
+    let oldTitle = book.title;
+    let oldAuthor = book.author;
+    books[index].title = newTitle.trim();
+    books[index].author = newAuthor.trim();
+    localStorage.setItem("books", JSON.stringify(books));
+
+    // Log edit
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+    let timestamp = new Date().toLocaleString();
+    logs.push({
+      user: loggedInUser.name,
+      action: `Edited book: "${oldTitle}" by ${oldAuthor} → "${newTitle}" by ${newAuthor}`,
+      time: timestamp
+    });
+    localStorage.setItem("userLogs", JSON.stringify(logs));
+
+    alert("Book updated successfully!");
+    renderBooks(document.getElementById("searchInput").value);
+  }
+
+  // ✅ Add new book
+  document.getElementById("bookForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    let title = document.getElementById("bookTitle").value.trim();
+    let author = document.getElementById("bookAuthor").value.trim();
+
+    if (title === "" || author === "") return;
+
+    books.push({ title, author });
+    localStorage.setItem("books", JSON.stringify(books));
+
+    // Log addition
+    let logs = JSON.parse(localStorage.getItem("userLogs")) || [];
+    let timestamp = new Date().toLocaleString();
+    logs.push({
+      user: loggedInUser.name,
+      action: `Added new book: "${title}" by ${author}`,
+      time: timestamp
+    });
+    localStorage.setItem("userLogs", JSON.stringify(logs));
+
+    alert("Book added successfully!");
+    e.target.reset();
+    renderBooks(document.getElementById("searchInput").value);
+  });
+
+  
+  renderBooks();
+</script>
+
+</body>
+</html>
+
+
+
