@@ -1,5 +1,5 @@
 <?php //
-session_start(); // so we can start or resume the session
+session_start(); // so we can start or resume the session 
 include "connect.php"; // // this is where $database comes from
 
 // require login
@@ -24,7 +24,7 @@ unset($_SESSION['flash_msg'], $_SESSION['flash_color']);
 // helper function to safely escape output for HTML and prevent XSS
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
 
-// -------------------- Handle Approve action (POST) --------------------
+// handle Approve action (POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_id'])) { // if a POST came in with approve_id set
   $resId = (int) $_POST['approve_id']; // normalize reservation id to integer
   if ($resId > 0) { // make sure its a valid id

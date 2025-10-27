@@ -1,5 +1,5 @@
 <?php
-session_start(); // starts or resumes the session so we can access $_SESSION
+session_start(); // starts or resumes the session so we can access $_SESSION 
 include "connect.php"; // this is where $database comes from
 
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0; // reads book id from query string and cast to int, sets default to 0 if its missing

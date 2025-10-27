@@ -1,6 +1,6 @@
 <?php
   session_start();
-  include "connect.php"; // this is where $database comes from
+  include "connect.php"; // this is where $database comes from 
 
   $loginMessage = ""; // this is the message that will be shown to the user if it is successful or has errors
   $msgColor = "red"; // default message color

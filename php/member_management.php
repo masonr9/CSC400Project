@@ -1,5 +1,5 @@
 <?php
-session_start(); // start or resume the session so we can read and write to $_SESSION state
+session_start(); // start or resume the session so we can read and write to $_SESSION state 
 include "connect.php"; // this is where $database come froms
 
 // Access control (Librarian/Admin only)

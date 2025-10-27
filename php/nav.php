@@ -1,5 +1,5 @@
 <?php
-// this ensures the session is started exactly once
+// this ensures the session is started exactly once 
 if (session_status() !== PHP_SESSION_ACTIVE) {
   session_start();
 }

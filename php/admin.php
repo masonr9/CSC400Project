@@ -1,5 +1,5 @@
 <?php
-session_start(); // start or resume the session to access $_SESSION data
+session_start(); // start or resume the session to access $_SESSION data 
 require_once "connect.php"; // this is where $database comes from
 
 // only admins with a valid login

@@ -1,5 +1,5 @@
 <?php
-session_start(); // start or resume the session so we can read $_SESSION values
+session_start(); // start or resume the session so we can read $_SESSION values 
 require_once "connect.php"; // provides $database (mysqli link)
 
 // admins only

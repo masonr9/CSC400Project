@@ -1,6 +1,6 @@
 <?php
 session_start();
-include "connect.php"; // include database connection, creates $database which links mysqli
+include "connect.php"; // include database connection, creates $database which links mysqli 
 
 // This indicates you must be logged in
 if (!isset($_SESSION['user_id'])) { // if there is no logged-in user in the session

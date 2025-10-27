@@ -1,6 +1,6 @@
 <?php
 session_start();
-include "connect.php"; // this is where $database (mysqli) comes from
+include "connect.php"; // this is where $database (mysqli) comes from 
 
 require __DIR__ . '/vendor/autoload.php'; // here we load composer's autoloader so PHPMailer is available
 use PHPMailer\PHPMailer\PHPMailer; // imports the PHPMailer class into the current namespace

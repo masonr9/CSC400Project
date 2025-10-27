@@ -1,5 +1,5 @@
 <?php
-session_start(); // starts or resumes the session so we can access $_SESSION
+session_start(); // starts or resumes the session so we can access $_SESSION 
 include "connect.php"; // this is where $database comes from
 
 if (!isset($_SESSION['user_id'])) { // if the user is not logged in

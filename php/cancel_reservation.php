@@ -1,5 +1,5 @@
 <?php
-session_start(); // starts or resumes the session so we can read or write $_SESSION values
+session_start(); // starts or resumes the session so we can read or write $_SESSION values 
 include "connect.php"; // this is where $database comes from
 
 // if the user is not logged in, it will block access and send them to the login page

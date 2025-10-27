@@ -1,5 +1,5 @@
 <?php
-include "connect.php"; // this is where $database comes from
+include "connect.php"; // this is where $database comes from 
 
 $q = trim($_GET['q'] ?? ''); // reads the search query from the URL, the default is empty string, it also trims any whitespace
 $like = '%' . $q . '%'; // builds a like pattern for SQL partial matching

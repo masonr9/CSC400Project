@@ -1,5 +1,5 @@
 <?php
-session_start(); // start or resume session so we can read or write to $_SESSION
+session_start(); // start or resume session so we can read or write to $_SESSION 
 include "connect.php"; // this is where $database comes from
 
 // Require login
