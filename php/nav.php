@@ -43,6 +43,7 @@ if ($isLoggedIn) {
   <nav>
     <ul>
       <li><a href="index.php">Home</a></li>
+      <li><a href="anounce.php">Annoucements</a></li>
       <li><a href="catalog.php">Catalog</a></li>
       <li><a href="<?= h($authHref) ?>"><?= h($authText) ?></a></li>
       <li><a href="<?= h($accountHref) ?>"><?= h($accountText) ?></a></li>
