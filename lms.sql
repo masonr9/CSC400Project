@@ -66,6 +66,15 @@ CREATE TABLE logs (
   timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 8. Annoucements Table
+CREATE TABLE announcements (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Insert sample users
 INSERT INTO users (name, email, password, role) VALUES
 ('Admin User', 'admin@example.com', 'admin123', 'Admin'),
