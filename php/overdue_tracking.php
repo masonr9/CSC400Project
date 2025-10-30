@@ -10,7 +10,7 @@ define('SMTP_USE', true);
 define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 587); // standard port for sending mail, it works with gmail, outlook
 define('SMTP_USER', 'ryanmason1127@gmail.com');
-define('SMTP_PASS', 'ycoc army iwag fxrw'); // Gmail app password
+define('SMTP_PASS', 'replace with password so it functions'); // Gmail app password
 define('SMTP_FROM', 'ryanmason1127@gmail.com');
 define('SMTP_FROM_NAME', 'Library Management System');
 
@@ -97,6 +97,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remind_id'])) { // on
         } catch (\Throwable $e) { // on any error during send
           $sent = false; // mark as failed
         }
+      }
+
+      // this writes an entry to logs table about reminder
+      $who  = $_SESSION['name'] ?? ('User#' . (int)($_SESSION['user_id'] ?? 0));
+      $what = $sent
+        ? "Sent overdue reminder to {$toName} ({$toEmail}) for \"{$title}\" (loan #{$loanId}, due {$due})."
+        : "Attempted overdue reminder to {$toName} ({$toEmail}) for \"{$title}\" (loan #{$loanId}, due {$due}) - send failed.";
+      if ($logStmt = mysqli_prepare($database, "INSERT INTO logs (`user`, `action`) VALUES (?, ?)")) {
+        mysqli_stmt_bind_param($logStmt, "ss", $who, $what);
+        mysqli_stmt_execute($logStmt);
+        mysqli_stmt_close($logStmt);
       }
 
       $_SESSION['flash_msg'] = $sent // set a flash message depending on result

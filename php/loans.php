@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['return_id'])) { // if
 
     $bookId = (int)$loanRow['book_id']; // extract book id for availability update
 
-    // Transaction: mark loan returned (+ optionally mark book available)
+    // mark loan returned + optionally mark book available
     mysqli_begin_transaction($database); // begin a database transaction for updates
     try {
       // Update loan status + return_date
@@ -62,13 +62,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['return_id'])) { // if
 
       if ($affected <= 0) { // if nothing changed, treat as failure
         throw new Exception("Loan was not updated.");
-      }
+      }      $stmt = mysqli_prepare(
+        $database,
+        "INSERT INTO loans (user_id, book_id, borrow_date, due_date, return_date, status)
+         SELECT user_id, book_id, borrow_date, due_date, CURDATE(), 'Returned'
+           FROM loans
+          WHERE loan_id = ?
+          LIMIT 1"
+      );
+      mysqli_stmt_bind_param($stmt, "i", $loanId);
+      mysqli_stmt_execute($stmt);
+      mysqli_stmt_close($stmt);
 
-      // Optional: mark the book available again now that it's returned
+      // mark the book available again now that it's returned
       $stmt = mysqli_prepare($database, "UPDATE books SET available = TRUE WHERE book_id = ?"); // prepare availability update
       mysqli_stmt_bind_param($stmt, "i", $bookId); // bind the book id
       mysqli_stmt_execute($stmt); // execute the update
       mysqli_stmt_close($stmt); // close statement
+      
+      $title = '';
+      $stmt = mysqli_prepare($database, "SELECT title FROM books WHERE book_id = ? LIMIT 1");
+      mysqli_stmt_bind_param($stmt, "i", $bookId);
+      mysqli_stmt_execute($stmt);
+      $rs = mysqli_stmt_get_result($stmt);
+      if ($rowT = mysqli_fetch_assoc($rs)) {
+        $title = $rowT['title'] ?? '';
+      }
+      mysqli_stmt_close($stmt);
+
+      // Build "who" and "what" for the log
+      $who  = $_SESSION['name'] ?? ('User#' . (int)$userId);
+      $what = $title !== ''
+        ? "Returned book #{$bookId} (\"{$title}\") on loan #{$loanId}"
+        : "Returned book #{$bookId} on loan #{$loanId}";
+
+      // Insert the log row
+      $stmt = mysqli_prepare($database, "INSERT INTO logs (`user`, `action`) VALUES (?, ?)");
+      mysqli_stmt_bind_param($stmt, "ss", $who, $what);
+      mysqli_stmt_execute($stmt);
+      mysqli_stmt_close($stmt);
 
       mysqli_commit($database); // commmit both updates as a single unit
       $_SESSION['flash_msg'] = "Book returned successfully."; // success message for the user

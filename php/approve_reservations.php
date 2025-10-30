@@ -24,10 +24,38 @@ unset($_SESSION['flash_msg'], $_SESSION['flash_color']);
 // helper function to safely escape output for HTML and prevent XSS
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
 
-// handle Approve action (POST)
+// Simple helper to write to the logs table
+function log_action(mysqli $db, string $what): void {
+  $who  = $_SESSION['name'] ?? ('User#' . (int)($_SESSION['user_id'] ?? 0));
+  $stmt = mysqli_prepare($db, "INSERT INTO logs (`user`, `action`) VALUES (?, ?)");
+  if ($stmt) {
+    mysqli_stmt_bind_param($stmt, "ss", $who, $what);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+  }
+}
+
+// -------------------- Handle Approve action (POST) --------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_id'])) { // if a POST came in with approve_id set
   $resId = (int) $_POST['approve_id']; // normalize reservation id to integer
   if ($resId > 0) { // make sure its a valid id
+
+    // load details only if pending so we can include them in the log
+    $stmt = mysqli_prepare(
+      $database,
+      "SELECT r.reservation_id, u.user_id, u.name AS member_name, b.book_id, b.title
+         FROM reservations r
+         JOIN users u ON u.user_id = r.user_id
+         JOIN books b ON b.book_id = r.book_id
+        WHERE r.reservation_id = ? AND r.status = 'Pending'
+        LIMIT 1"
+    );
+    mysqli_stmt_bind_param($stmt, "i", $resId);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $row = mysqli_fetch_assoc($res) ?: null;
+    mysqli_stmt_close($stmt);
+
     $stmt = mysqli_prepare( // prepare an update statement to set status as Approved but only if its marked as pending
       $database,
       "UPDATE reservations
@@ -40,6 +68,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_id'])) { // i
     mysqli_stmt_close($stmt); // close the statement
 
     if ($affected > 0) { // if the update actually happened
+
+      // log success include member / book if we fetched them
+      if ($row) {
+        $logText = sprintf(
+          'Approved reservation #%d for %s - book #%d "%s"',
+          (int)$row['reservation_id'],
+          $row['member_name'] ?? ('User#' . (int)$row['user_id']),
+          (int)$row['book_id'],
+          $row['title'] ?? 'Unknown Title'
+        );
+      } else {
+        $logText = "Approved reservation #{$resId}";
+      }
+      log_action($database, $logText);
+
       $_SESSION['flash_msg'] = "Reservation approved."; // set success flash
       $_SESSION['flash_color'] = "green";
     } else {
@@ -54,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_id'])) { // i
   exit(); // stop processing
 }
 
-// here is fulfill action is handled
+// here is where the fulfill action is handled
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fulfill_id'])) { // if a POST came in with fulfill_id set
   $resId = (int) $_POST['fulfill_id']; // normalize reservation id
 
@@ -68,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fulfill_id'])) { // i
   // first, it loads reservation but it must be Approved, and get user_id & book_id
   $stmt = mysqli_prepare( // prepare a SELECT statement to fetch reservation and book availability
     $database,
-    "SELECT r.reservation_id, r.user_id, r.book_id, r.status, b.available
+    "SELECT r.reservation_id, r.user_id, r.book_id, r.status, b.available, b.title
      FROM reservations r
      JOIN books b ON b.book_id = r.book_id
      WHERE r.reservation_id = ?
@@ -96,6 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fulfill_id'])) { // i
 
   $userId = (int)$row['user_id']; // extract user id for the loan insert
   $bookId = (int)$row['book_id']; // extract book id for the loan and availability
+  $bookTitle = $row['title'] ?? 'Unknown Title';
 
   // it ensures there is no active loan for this book already
   $stmt = mysqli_prepare( // prepares query to check if an active loan for this book exists
@@ -155,6 +199,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fulfill_id'])) { // i
     mysqli_stmt_close($stmt); // close the statement
 
     mysqli_commit($database); // commit loan insert, reservation update, book update
+    // Log fulfillment after a successful commit
+    $logText = sprintf(
+      'Fulfilled reservation #%d and created loan for user #%d - book #%d "%s" (due in %d days)',
+      $resId, $userId, $bookId, $bookTitle, $days
+    );
+    log_action($database, $logText);
     $_SESSION['flash_msg'] = "Reservation fulfilled and loan created. Due in {$days} days."; // success flash message
     $_SESSION['flash_color'] = "green";
 

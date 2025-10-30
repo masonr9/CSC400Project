@@ -112,6 +112,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pay_single_loan'])) {
   mysqli_stmt_bind_param($stmt, "iid", $userId, $loanId, $amount); // Bind user, loan, amount
 
   if (mysqli_stmt_execute($stmt)) {  // Try to record payment
+    // insert into logs, record the single fine payment
+    $who   = $_SESSION['name'] ?? ('User#' . $userId);
+    $title = $computed[$loanId]['title'] ?? '';
+    $amtStr = '$' . number_format($amount, 2);
+    $what  = $title !== ''
+      ? "Paid fine {$amtStr} for loan #{$loanId} (\"{$title}\")"
+      : "Paid fine {$amtStr} for loan #{$loanId}";
+
+    $stmtLog = mysqli_prepare($database, "INSERT INTO logs (`user`, `action`) VALUES (?, ?)");
+    mysqli_stmt_bind_param($stmtLog, "ss", $who, $what);
+    mysqli_stmt_execute($stmtLog);
+    mysqli_stmt_close($stmtLog);
+
     $_SESSION['flash_msg'] = "Fine for loan #{$loanId} ($" . number_format($amount, 2) . ") paid."; // Success message
     $_SESSION['flash_color'] = "green"; // Success color
   } else {
@@ -145,6 +158,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pay_all'])) { // If u
       if (!mysqli_stmt_execute($stmt)) { // Execute and check
         throw new Exception("Insert failed for loan {$loanId}"); // Throw to trigger rollback on any failure
       }
+      // insert into logs, record each fine payment in bulk
+      $who   = $_SESSION['name'] ?? ('User#' . $userId);
+      $title = (string)($c['title'] ?? '');
+      $amtStr = '$' . number_format($amount, 2);
+      $what  = $title !== ''
+        ? "Paid fine {$amtStr} for loan #{$loanId} (\"{$title}\")"
+        : "Paid fine {$amtStr} for loan #{$loanId}";
+
+      $stmtLog = mysqli_prepare($database, "INSERT INTO logs (`user`, `action`) VALUES (?, ?)");
+      mysqli_stmt_bind_param($stmtLog, "ss", $who, $what);
+      mysqli_stmt_execute($stmtLog);
+      mysqli_stmt_close($stmtLog);
       mysqli_stmt_close($stmt); // Close statement
     }
     mysqli_commit($database); // Commit all inserts

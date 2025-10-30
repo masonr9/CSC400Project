@@ -20,6 +20,32 @@ if ($resId <= 0) { // if the id is missing or invalid
   exit();
 }
 
+// Load the reservation (must belong to this user and be Pending) and grab book info for logging 
+$stmt = mysqli_prepare(
+  $database,
+  "SELECT r.reservation_id, r.book_id, b.title
+     FROM reservations r
+     JOIN books b ON b.book_id = r.book_id
+    WHERE r.reservation_id = ? AND r.user_id = ? AND r.status = 'Pending'
+    LIMIT 1"
+);
+mysqli_stmt_bind_param($stmt, "ii", $resId, $userId); // bind resid as int and userid as int
+mysqli_stmt_execute($stmt); // execute the select statement
+$res = mysqli_stmt_get_result($stmt); // get the result set
+$row = mysqli_fetch_assoc($res); // fetch a single row as an assocative array
+mysqli_stmt_close($stmt); // close the statement
+
+if (!$row) {
+  // Nothing matching this user and pending state
+  $_SESSION['flash_msg'] = "Unable to cancel this reservation.";
+  $_SESSION['flash_color'] = "red";
+  header("Location: reservations.php");
+  exit();
+}
+
+$bookId = (int)$row['book_id'];
+$bookTitle = $row['title'] ?? '';
+
 // it will only allow deleting user's own reservation when it's still pending
 $stmt = mysqli_prepare( // prepares a delete statement with parameters
   $database,
@@ -30,6 +56,12 @@ mysqli_stmt_bind_param($stmt, "ii", $resId, $userId); // binds the reservation i
 mysqli_stmt_execute($stmt); // executes the delete query
 
 if (mysqli_stmt_affected_rows($stmt) > 0) { // if at least one row was deleted meaning it was successful
+  $who = $_SESSION['name'] ?? ('User#' . $userId); // fall back to User #id if session name is missing
+  $what = "Cancelled reservation #{$resId} for book #{$bookId}" . ($bookTitle !== '' ? " (\"{$bookTitle}\")" : ""); // include book title in the action text
+  $logStmt = mysqli_prepare($database, "INSERT INTO logs (`user`, `action`) VALUES (?, ?)");
+  mysqli_stmt_bind_param($logStmt, "ss", $who, $what);
+  mysqli_stmt_execute($logStmt);
+  mysqli_stmt_close($logStmt);
   $_SESSION['flash_msg'] = "Reservation cancelled."; // success message
   $_SESSION['flash_color'] = "green";
 } else {

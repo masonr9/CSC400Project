@@ -6,7 +6,7 @@
   define('SMTP_HOST', 'smtp.gmail.com');
   define('SMTP_PORT', 587); // standard port for sending mail, it works with gmail, outlook
   define('SMTP_USER', 'ryanmason1127@gmail.com');
-  define('SMTP_PASS', 'removed for security purposes '); // Gmail app password
+  define('SMTP_PASS', 'ycoc army iwag fxrw'); // Gmail app password
   define('SMTP_FROM', 'ryanmason1127@gmail.com');
   define('SMTP_FROM_NAME', 'Library Management System');
   include "connect.php"; // This is where $database comes from

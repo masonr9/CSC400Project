@@ -58,6 +58,14 @@ CREATE TABLE IF NOT EXISTS fines (
     CONSTRAINT fk_fines_loan FOREIGN KEY (loan_id) REFERENCES loans(loan_id)
 );
 
+-- 7. Logs Table
+CREATE TABLE logs (
+  log_id INT AUTO_INCREMENT PRIMARY KEY,
+  user VARCHAR(100) NOT NULL,
+  action TEXT NOT NULL,
+  timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Insert sample users
 INSERT INTO users (name, email, password, role) VALUES
 ('Admin User', 'admin@example.com', 'admin123', 'Admin'),

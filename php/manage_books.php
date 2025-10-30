@@ -17,6 +17,18 @@ if (!in_array($role, ['Librarian','Admin'], true)) { // only Librarian/Admin may
 // helper function to escape output safely for HTML
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
 
+// Small helper function to write to logs
+function log_action(mysqli $db, string $what): void {
+  $who = $_SESSION['name'] ?? ('User#' . (int)($_SESSION['user_id'] ?? 0));
+  $stmt = mysqli_prepare($db, "INSERT INTO logs (`user`, `action`) VALUES (?, ?)");
+  if ($stmt) {
+    mysqli_stmt_bind_param($stmt, "ss", $who, $what);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+  }
+}
+
+
 $flash = $_SESSION['flash_msg'] ?? ''; // flash message from session
 $flashColor = $_SESSION['flash_color'] ?? 'green'; // flash color, default is green
 unset($_SESSION['flash_msg'], $_SESSION['flash_color']); // clear flash values so they don't persist
@@ -77,6 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_book'])) { // if 
   );
 
   if (mysqli_stmt_execute($stmt)) { // attempt to insert the row
+    $newId = (int)mysqli_insert_id($database);
+    log_action($database, "Added book #{$newId} \"{$title}\" by {$author}");
     $_SESSION['flash_msg'] = "Book added successfully."; // success flash message
     $_SESSION['flash_color'] = "green"; // success color
   } else {
@@ -92,15 +106,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_book'])) { // if 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_book'])) { // if a delete action was posted
   $id = (int)($_POST['delete_book'] ?? 0); // get book id to delete
   if ($id > 0) { // only proceed for a positive id
-    // Attempt delete, it will fail if FK references exist unless ON DELETE CASCADE
-    $stmt = mysqli_prepare($database, "DELETE FROM books WHERE book_id = ?"); // prepare delete
-    mysqli_stmt_bind_param($stmt, "i", $id); // bind id as integer
-    mysqli_stmt_execute($stmt); // execute delete
-    $aff = mysqli_stmt_affected_rows($stmt); // store how many rows were removed
-    mysqli_stmt_close($stmt); // close statement
-    if ($aff > 0) { // if at least one row deleted
-      $_SESSION['flash_msg'] = "Book removed."; // success flash message
-      $_SESSION['flash_color'] = "green"; // success color
+    // Grab details for logging first
+    $titleForLog = '';
+    $authorForLog = '';
+    if ($stmtInfo = mysqli_prepare($database, "SELECT title, author FROM books WHERE book_id = ? LIMIT 1")) {
+      mysqli_stmt_bind_param($stmtInfo, "i", $id);
+      mysqli_stmt_execute($stmtInfo);
+      $resInfo = mysqli_stmt_get_result($stmtInfo);
+      if ($rowInfo = mysqli_fetch_assoc($resInfo)) {
+        $titleForLog  = (string)($rowInfo['title'] ?? '');
+        $authorForLog = (string)($rowInfo['author'] ?? '');
+      }
+      mysqli_stmt_close($stmtInfo);
+    }
+
+    // Attempt delete (may fail if FK constraints)
+    $stmt = mysqli_prepare($database, "DELETE FROM books WHERE book_id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $id);
+    mysqli_stmt_execute($stmt);
+    $aff = mysqli_stmt_affected_rows($stmt);
+    mysqli_stmt_close($stmt);
+
+    if ($aff > 0) {
+      // Log after successful removal
+      $desc = $titleForLog !== '' ? "Removed book #{$id} \"{$titleForLog}\" by {$authorForLog}"
+                                  : "Removed book #{$id}";
+      log_action($database, $desc);
+
+      $_SESSION['flash_msg'] = "Book removed.";
+      $_SESSION['flash_color'] = "green";
     } else {
       $_SESSION['flash_msg'] = "Unable to remove book (in use or not found)."; // failure flash message
       $_SESSION['flash_color'] = "red"; // error color
@@ -189,6 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_book'])) { // 
     $title, $author, $genre, $language, $isbn, $pubyearInt, $summary, $available, $id
   );
   if (mysqli_stmt_execute($stmt)) { // execute update
+    log_action($database, "Edited book #{$id} -> \"{$title}\" by {$author}");
     $_SESSION['flash_msg'] = "Book updated successfully."; // success flash message
     $_SESSION['flash_color'] = "green"; // success color
   } else {
