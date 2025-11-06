@@ -1,5 +1,6 @@
 <?php
 include "connect.php"; // this is where $database comes from
+include "maintenance.php";
 
 $q = trim($_GET['q'] ?? ''); // reads the search query from the URL, the default is empty string, it also trims any whitespace
 $like = '%' . $q . '%'; // builds a like pattern for SQL partial matching
@@ -49,14 +50,26 @@ function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES); } // this help
 
 <?php include 'nav.php'; ?>
 
-<main class="container">
-  <form class="search-bar" method="get" action="catalog.php">
-    <input type="text" name="q" placeholder="Search by title, author, or ISBN" value="<?= h($q) ?>"> <!-- search box; pre-fills with current query -->
+<main class="catalog-shell">
+  <section class="catalog-header">
+    <h2>Browser the Catalog</h2>
+    <p>Search by title, author, or ISBN and open a book to reserve it.</p>
+  </section>
+
+  <form class="catalog-search" method="get" action="catalog.php">
+    <input type="text" name="q" placeholder="Search by title, author, or ISBN" value="<?= h($q) ?>" aria-label="Search catalog"> <!-- search box, pre-fills with current query -->
     <button type="submit">Search</button>
   </form>
 
   <section class="book-list">
-    <h2>Available Books</h2>
+    <div class="list-header">
+      <h3>
+        <?= $q === '' ? 'All Books' : 'Results for “' . h($q) . '”' ?>
+      </h3>
+      <p class="muted">
+        <?= count($books) ?> item<?= count($books) === 1 ? '' : 's' ?>
+      </p>
+    </div>
     
     <?php if (count($books) === 0): ?> <!-- If there are no results to show -->
       <p class="muted">No books found<?= $q !== '' ? ' for “'.h($q).'”' : '' ?>.</p> <!-- Message for none found -->
@@ -64,23 +77,42 @@ function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES); } // this help
       <div class="book-grid">
         <?php foreach ($books as $b): ?> <!-- this loops over each book row -->
           <article class="book-card">
-            <div class="badge"><?= $b['available'] ? 'Available' : 'Checked Out' ?></div> <!-- Status badge based on boolean available -->
-            <h3><a href="book.php?id=<?= (int)$b['book_id'] ?>"><?= h($b['title']) ?></a></h3> <!-- title linking to book detail page, id cast to int, -->
-            <p class="muted">by <?= h($b['author'] ?? 'Unknown') ?></p> <!-- Author or unknown if its empty -->
-            <?php if (!empty($b['isbn'])): ?> <!-- conditionally show ISBN if present -->
-              <p class="muted">ISBN: <?= h($b['isbn']) ?></p> <!-- display ISBN safely -->
-            <?php endif; ?>
-            <?php if (!empty($b['publication_year'])): ?> <!-- conditionally show publication year if present -->
-              <p class="muted">Published: <?= h($b['publication_year']) ?></p>
-            <?php endif; ?>
-            <p><?= h(mb_strimwidth($b['summary'] ?? '', 0, 140, '…')) ?></p> <!-- short summary snippet, it cuts to 140 characters and escape if too long -->
-            <div class="book-actions"> <!-- actions for this book -->
-              <a href="book.php?id=<?= (int)$b['book_id'] ?>">View details →</a> <!-- links to book detail page -->
+            <div class="book-card-top">
+              <span class="badge <?= $b['available'] ? 'badge-available' : 'badge-out' ?>">
+                <?= $b['available'] ? 'Available' : 'Checked Out' ?> <!-- Status badge based on boolean available -->
+              </span>
+            <?php if (!empty($b['genre'])): ?>
+                <span class="chip"><?= h($b['genre']) ?></span>
+              <?php endif; ?>
+            </div>
+
+            <h3 class="book-title">
+              <a href="book.php?id=<?= (int)$b['book_id'] ?>">
+                <?= h($b['title']) ?>
+              </a>
+            </h3>
+            <p class="book-author">by <?= h($b['author'] ?? 'Unknown') ?></p>
+
+            <div class="book-meta">
+              <?php if (!empty($b['isbn'])): ?>
+                <span>ISBN: <?= h($b['isbn']) ?></span>
+              <?php endif; ?>
+              <?php if (!empty($b['publication_year'])): ?>
+                <span>• <?= h($b['publication_year']) ?></span>
+              <?php endif; ?>
+            </div>
+
+            <p class="book-summary">
+              <?= h(mb_strimwidth($b['summary'] ?? '', 0, 150, '…')) ?>
+            </p>
+
+            <div class="book-actions">
+              <a class="btn-inline" href="book.php?id=<?= (int)$b['book_id'] ?>">View details -></a>
             </div>
           </article>
-        <?php endforeach; ?> <!-- ends foreach book-->
+        <?php endforeach; ?>
       </div>
-    <?php endif; ?> <!-- ends results conditional -->
+    <?php endif; ?>
   </section>
 </main>
 </body>

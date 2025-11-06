@@ -34,46 +34,39 @@ if ($result) {
 </head>
 <body>
 
-<header>
-  <h1>Library Management System</h1>
-  <nav>
-    <ul>
-      <li><a href="index.php">Home</a></li>
-      <li><a href="catalog.php">Catalog</a></li>
-      <li><a href="anounce.php">Announcements</a></li>
-      <?php if (isset($_SESSION['role'])): ?>
-        <?php if ($_SESSION['role'] === 'Admin'): ?>
-          <li><a href="admin.php">Admin</a></li>
-        <?php elseif ($_SESSION['role'] === 'Librarian'): ?>
-          <li><a href="librarian.php">Librarian</a></li>
-        <?php else: ?>
-          <li><a href="member.php">Member</a></li>
-        <?php endif; ?>
-        <li><a href="logout.php" class="logout-btn">Logout</a></li>
-      <?php else: ?>
-        <li><a href="login.php">Login</a></li>
-        <li><a href="signup.php">Sign Up</a></li>
-        <li><a href="contact.php">Contact Us</a></li>
-      <?php endif; ?>
-    </ul>
-  </nav>
-</header>
+<?php
+include "nav.php"
+?>
 
-<main class="container">
-  <h2>📢 Library Announcements</h2>
+<main class="announce-shell">
+  <header class="annouce-header">
+    <p class="annouce-pill">📢 Updates</p>
+    <h2>Library Announcements</h2>
+    <p class="announce-sub">
+      Stay up to date on library hours, events, and important notices.
+    </p>
+  </header>
 
   <?php if ($loadError): ?>
     <p style="color:red;"><?= h($loadError) ?></p>
   <?php elseif (empty($announcements)): ?>
-    <p class="muted">No announcements at the moment.</p>
+    <div class="empty-card">
+      <p class="muted">No announcements at the moment.</p>
+    </div>
   <?php else: ?>
-    <?php foreach ($announcements as $row): ?>
-      <div class="announcement-box">
-        <h3><?= h($row['title']) ?></h3>
-        <p><?= nl2br(h($row['message'])) ?></p>
-        <small>Posted on: <?= h($row['created_at']) ?></small>
-      </div>
-    <?php endforeach; ?>
+    <section class="annouce-list">
+      <?php foreach ($announcements as $row): ?>
+        <article class="annouce-card">
+          <div class="announcement-box">
+            <h3><?= h($row['title']) ?></h3>
+            <span class="announce-date">
+              <?= h(date('M j, Y g:i a', strtotime($row['created_at']))) ?>
+            </span>
+          </div>
+          <p class="announce-body"><?= nl2br(h($row['message'])) ?></p>
+        </article>
+     <?php endforeach; ?>
+    </section>
   <?php endif; ?>
 </main>
 
