@@ -10,7 +10,7 @@ define('SMTP_USE', true);
 define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 587); // standard port for sending mail, it works with gmail, outlook
 define('SMTP_USER', 'ryanmason1127@gmail.com');
-define('SMTP_PASS', 'replace with password so it functions'); // Gmail app password
+define('SMTP_PASS', 'mqcg snim omyt kziz'); // Gmail app password
 define('SMTP_FROM', 'ryanmason1127@gmail.com');
 define('SMTP_FROM_NAME', 'Library Management System');
 

@@ -46,11 +46,13 @@ if ($displayName === '') { // if the name is still empty after all attempts
 <header>
   <h1>Admin Dashboard</h1>
   <nav>
-    <ul>
-      <li><a href="admin.php">Dashboard</a></li>
+    <ul style="display:flex; justify-content:center;">
+      <li><a href="index.php">Home</a></li>
       <li><a href="role_management.php">Role Management</a></li>
       <li><a href="system_config.php">System Config</a></li>
       <li><a href="logs.php">Activity Logs</a></li>
+      <li><a href="announcements.php">Create Announcements</a></li>
+      <li><a href="monitoring.php">System Monitoring</a></li>
       <li><a href="logout.php" class="logout-btn">Logout</a></li>
     </ul>
   </nav>
@@ -64,6 +66,7 @@ if ($displayName === '') { // if the name is still empty after all attempts
       <li><a href="system_config.php">Configure System</a></li>
       <li><a href="logs.php">View Activity Logs</a></li>
       <li><a href="announcements.php">Create Announcements</a></li>
+      <li><a href="monitoring.php">System Monitoring</li>
     </ul>
   </section>
 </main>

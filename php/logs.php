@@ -40,8 +40,12 @@ if ($result) {
 <header>
   <h1>User Activity Logs</h1>
   <nav>
-    <ul>
+    <ul style="display:flex;justify-content:center;">
       <li><a href="admin.php">Dashboard</a></li>
+      <li><a href="role_management.php">Role Management</a></li>
+      <li><a href="system_config.php">System Config</a></li>
+      <li><a href="announcements.php">Create Announcements</a></li>
+      <li><a href="monitoring.php">System Monitoring</a></li>
       <li><a href="logout.php" class="logout-btn">Logout</a></li>
     </ul>
   </nav>

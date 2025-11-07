@@ -215,107 +215,253 @@ mysqli_stmt_close($stmt); // Close statement
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Fines</title>
   <link rel="stylesheet" href="styles.css"/> 
+  <style>
+    body { 
+      background: #f3f4f6; 
+    }
+    .fines-shell {
+      max-width: 1150px;
+      margin: 2.1rem auto 2.5rem;
+      padding: 0 1rem;
+    }
+    .fines-hero {
+      background: linear-gradient(135deg, #b91c1c 0%, #be123c 70%);
+      border-radius: 16px;
+      padding: 1.2rem 1.35rem 1.25rem;
+      color: #fff;
+      box-shadow: 0 20px 35px rgba(190,18,60,.25);
+      margin-bottom: 1.5rem;
+    }
+    .fines-hero h2 {
+      margin: 0 0 .3rem;
+    }
+    .fines-hero p {
+      margin: 0;
+      color: rgba(255,255,255,.85);
+      font-size: .9rem;
+    }
+    .top-links {
+      display: flex;
+      gap: .6rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.3rem;
+    }
+    .top-links a {
+      background: #fff;
+      color: #1f2937;
+      border-radius: 9999px;
+      padding: .38rem .75rem;
+      font-size: .72rem;
+      border: 1px solid rgba(148,163,184,.35);
+      text-decoration: none;
+      display: inline-flex;
+      gap: .35rem;
+      align-items: center;
+    }
+    .flash {
+      padding: .7rem .85rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      font-size: .82rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid rgba(148,163,184,.12);
+      box-shadow: 0 10px 32px rgba(15,23,42,.03);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: .85rem 1rem .6rem;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .card-header h3 {
+      margin: 0;
+      font-size: .95rem;
+      color: #0f172a;
+    }
+    .card-body {
+      padding: .75rem 1rem 1rem;
+    }
+    .tag {
+      background: rgba(248,250,252,.7);
+      border: 1px solid rgba(148,163,184,.25);
+      border-radius: 9999px;
+      padding: .35rem .7rem;
+      font-size: .7rem;
+      color: #0f172a;
+    }
+    table.fines-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .fines-table th,
+    .fines-table td {
+      padding: .5rem .55rem;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      font-size: .78rem;
+    }
+    .fines-table thead {
+      background: #f8fafc;
+    }
+    .btn-link {
+      background: none;
+      border: none;
+      color: #b91c1c;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: .75rem;
+    }
+    .bulk-btn {
+      background: #b91c1c;
+      color: #fff;
+      border: none;
+      border-radius: 9999px;
+      padding: .4rem .75rem;
+      font-size: .7rem;
+      cursor: pointer;
+    }
+    .muted {
+      color: #94a3b8;
+      font-size: .78rem;
+    }
+    .amount-badge {
+      background: #fee2e2;
+      color: #b91c1c;
+      border-radius: 9999px;
+      padding: .25rem .55rem;
+      font-size: .7rem;
+      display: inline-block;
+    }
+    .totals {
+      margin-top: .6rem;
+      font-size: .8rem;
+      color: #0f172a;
+    }
+    @media (max-width: 850px) {
+      .card-body { overflow-x: auto; }
+    }
+  </style>
 </head>
 <body>
 
 <?php include 'nav.php'; ?>
 
-<main class="container">
-  <section>   
-    <ul>
-      <li><a href="member.php">Member Dashboard</a></li>
-      <li><a href="catalog.php">Search Books</a></li>
-      <li><a href="reservations.php">My Reservations</a></li>
-      <li><a href="loans.php">Loans</a></li>
-    </ul>
-    <h2>Payable Fines (Returned-Late Only)
-      <span class="badge">$<?= number_format($totalComputed, 2) ?></span>
-    </h2>
+<main class="fines-shell">
+  <div class="fines-hero">
+    <h2>My Fines</h2>
+    <p>View late-return charges and settle them online.</p>
+  </div>
 
-    <?php if ($flash): ?>  <!-- If there is a flash message -->
-      <p style="color: <?= h($flashColor) ?>;"><?= h($flash) ?></p> <!-- Show flash with color -->
-    <?php endif; ?> <!-- End flash -->
+  <div class="top-links">
+    <a href="member.php">Member Dashboard</a>
+    <a href="catalog.php">Search Books</a>
+    <a href="reservations.php">My Reservations</a>
+    <a href="loans.php">Loans</a>
+  </div>
 
-    <?php if (empty($computed)): ?>  <!-- If nothing to pay -->
-      <p class="muted">No payable fines. Fines become payable only after the book is returned late.</p>
-    <?php else: ?>  <!-- Else show table and actions -->
-      <form method="post" style="margin:.5rem 0;">
-        <button type="submit" name="pay_all" class="btn-link"
-                onclick="return confirm('Pay all returned-loan fines now?');">  <!-- Confirm bulk pay -->
-          Pay All (<?= '$'.number_format($totalComputed, 2) ?>) 
-        </button>
-      </form>
+  <?php if ($flash): ?> <!-- If there is a flash message -->
+    <p class="flash" style="background: <?= h($flashColor)==='red' ? '#fee2e2' : '#dcfce7' ?>; color: <?= h($flashColor)==='red' ? '#b91c1c' : '#166534' ?>;">
+      <?= h($flash) ?>
+    </p> <!-- show flash message with color -->
+  <?php endif; ?>
 
-      <table class="fines"> 
-        <thead>
-          <tr>
-            <th># Loan</th>
-            <th>Book Title</th> 
-            <th>Author</th>
-            <th>Due Date</th>
-            <th>Returned</th>
-            <th>Days Late</th>
-            <th>Fine (<?= '$'.number_format(FINE_RATE_PER_DAY, 2) ?>/day)</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($computed as $c): ?><!-- Loop each payable fine -->
-          <tr>
-            <td><?= h($c['loan_id']) ?></td> <!-- Show loan id -->
-            <td><?= h($c['title']) ?></td> 
-            <td><?= h($c['author']) ?></td> 
-            <td><?= h($c['due_date']) ?></td>
-            <td><?= h($c['return_date']) ?></td>
-            <td><?= h($c['days_overdue']) ?></td>
-            <td>$<?= number_format($c['amount'], 2) ?></td> 
-            <td class="actions">
-              <form method="post" style="display:inline;" onsubmit="return confirm('Pay this fine now?');"> <!-- Single pay form -->
-                <input type="hidden" name="pay_single_loan" value="<?= (int)$c['loan_id'] ?>"> <!-- Hidden loan id -->
-                <button type="submit" class="btn-link">Pay</button>
-              </form>
-            </td>
-          </tr>
-        <?php endforeach; ?>  <!-- End loop -->
-        </tbody>
-      </table>
-
-      <p class="totals">Total payable: $<?= number_format($totalComputed, 2) ?></p> <!-- Total payable sum -->
-    <?php endif; ?> <!-- End payable block -->
+  <!-- Payable fines -->
+  <section class="card">
+    <div class="card-header">
+      <h3>Payable Fines (Returned-Late)</h3>
+      <span class="tag">Total payable: $<?= number_format($totalComputed, 2) ?></span>
+    </div>
+    <div class="card-body">
+      <?php if (empty($computed)): ?> <!-- if nothing to pay -->
+        <p class="muted">No payable fines. Fines become payable only after the book is returned late.</p>
+      <?php else: ?> <!-- else show table and actions -->
+        <form method="post" style="margin-bottom:.6rem;">
+          <button type="submit" name="pay_all" class="bulk-btn" onclick="return confirm('Pay all fines now?');">
+            Pay All ($<?= number_format($totalComputed, 2) ?>)
+          </button>
+        </form>
+        <table class="fines-table">
+          <thead>
+            <tr>
+              <th># Loan</th>
+              <th>Book Title</th>
+              <th>Author</th>
+              <th>Due</th>
+              <th>Returned</th>
+              <th>Days Late</th>
+              <th>Fine (<?= '$'.number_format(FINE_RATE_PER_DAY, 2) ?>/day)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+          <?php foreach ($computed as $c): ?> <!-- loop each payable fine -->
+            <tr>
+              <td><?= h($c['loan_id']) ?></td> <!-- show loan id -->
+              <td><?= h($c['title']) ?></td>
+              <td><?= h($c['author']) ?></td>
+              <td><?= h($c['due_date']) ?></td>
+              <td><?= h($c['return_date']) ?></td>
+              <td><?= h($c['days_overdue']) ?></td>
+              <td><span class="amount-badge">$<?= number_format($c['amount'], 2) ?></span></td>
+              <td>
+                <form method="post" style="display:inline;" onsubmit="return confirm('Pay this fine now?');"> <!-- single pay form -->
+                  <input type="hidden" name="pay_single_loan" value="<?= (int)$c['loan_id'] ?>"> <!-- hidden loan id -->
+                  <button type="submit" class="btn-link">Pay</button>
+                </form>
+              </td>
+            </tr>
+          <?php endforeach; ?> <!-- End loop -->
+          </tbody>
+        </table>
+        <p class="totals">Total payable: $<?= number_format($totalComputed, 2) ?></p> <!-- total payable sum -->
+      <?php endif; ?> <!-- end payable block -->
+    </div>
   </section>
 
-  <section style="margin-top:2rem;">   <!-- History section -->
-    <h3>Recorded Fines (History)</h3>
-    <?php if (empty($recorded)): ?>  <!-- If none recorded -->
-      <p class="muted">No recorded fines found.</p> <!-- Inform user -->
-    <?php else: ?> <!-- Else show history table -->
-      <table class="fines"> <!-- History table -->
-        <thead>
-          <tr>
-            <th># Fine</th> 
-            <th># Loan</th>
-            <th>Amount</th>
-            <th>Paid</th>
-          </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($recorded as $f): ?> <!-- Loop recorded fines -->
-          <tr>
-            <td><?= h($f['fine_id']) ?></td>  <!-- Show fine id -->
-            <td><?= h($f['loan_id'] ?? '—') ?></td> <!-- Show related loan id or dash -->
-            <td>$<?= number_format((float)$f['amount'], 2) ?></td> <!-- Show amount -->
-            <td><?= ((int)$f['paid'] === 1) ? 'Yes' : 'No' ?></td> <!-- Show paid status -->
-          </tr>
-        <?php endforeach; ?> <!-- End loop -->
-        </tbody>
-      </table>
-      <?php if ($totalRecordedUnpaid > 0): ?> <!-- If unpaid recorded fines exist -->
-        <p class="totals">Total recorded unpaid: $<?= number_format($totalRecordedUnpaid, 2) ?></p> <!-- Show unpaid total -->
-      <?php endif; ?>  <!-- End unpaid total -->
-    <?php endif; ?> <!-- End recorded block -->
-    <p class="muted" style="margin-top:.5rem;"> <!-- Explanatory note -->
-      You can only pay a fine after the book is returned. Paid fines are tied to the specific loan and will no longer appear in the payable list.
-    </p>
+  <!-- History -->
+  <section class="card">
+    <div class="card-header">
+      <h3>Recorded Fines (History)</h3>
+      <?php if ($totalRecordedUnpaid > 0): ?> <!-- if unpaid recorded fines exist -->
+        <span class="tag" style="background:#fef9c3;border-color:rgba(250,204,21,.35);">Unpaid total: $<?= number_format($totalRecordedUnpaid, 2) ?></span> <!-- show unpaid total -->
+      <?php endif; ?> <!-- end unpaid total -->
+    </div>
+    <div class="card-body">
+      <?php if (empty($recorded)): ?> <!-- if none recorded -->
+        <p class="muted">No recorded fines found.</p>
+      <?php else: ?> <!-- else show history table -->
+        <table class="fines-table">
+          <thead>
+            <tr>
+              <th># Fine</th>
+              <th># Loan</th>
+              <th>Amount</th>
+              <th>Paid</th>
+            </tr>
+          </thead>
+          <tbody>
+          <?php foreach ($recorded as $f): ?> <!-- loop recorded fines -->
+            <tr>
+              <td><?= h($f['fine_id']) ?></td> <!-- show fine id -->
+              <td><?= h($f['loan_id'] ?? '-') ?></td> <!-- show related loan id or dash -->
+              <td>$<?= number_format((float)$f['amount'], 2) ?></td> <!-- show amount -->
+              <td><?= ((int)$f['paid'] === 1) ? 'Yes' : 'No' ?></td> <!-- show paid status -->
+            </tr>
+          <?php endforeach; ?> <!-- end loop -->
+          </tbody>
+        </table>
+      <?php endif; ?> <!-- end recorded block -->
+      <p class="muted" style="margin-top:.6rem;"> <!-- Explanatory note -->
+        You can only pay a fine after the book is returned. Paid fines are tied to the specific loan and will no longer appear in the payable list.
+      </p>
+    </div>
   </section>
 </main>
 </body>
