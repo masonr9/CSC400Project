@@ -126,53 +126,168 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+  body {
+    min-height: 100vh;
+  }
+  .auth-shell {
+  max-width: 420px;
+  margin: 2.25rem auto 3rem;
+  }
+  .auth-card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(15,23,42,0.03);
+    padding: 1.5rem 1.5rem 1.25rem;
+  }
+  .auth-card h2 {
+    margin-top: 0;
+    margin-bottom: 0.65rem;
+    font-size: 1.4rem;
+    text-align: center;
+    color: #0f172a;
+  }
+  .auth-subtitle {
+    text-align: center;
+    margin-bottom: 1.3rem;
+    color: #64748b;
+    font-size: .9rem;
+  }
+  .form-field {
+    margin-bottom: .75rem;
+  }
+  .form-field label {
+    display: block;
+    font-weight: 600;
+    font-size: .85rem;
+    margin-bottom: .25rem;
+    color: #0f172a;
+  }
+  .form-field input,
+  .form-field select,
+  .form-field textarea {
+    width: 100%;
+    padding: .55rem .6rem;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    transition: border .12s ease-out, box-shadow .12s ease-out;
+    font-size: .9rem;
+  }
+  .form-field input:focus,
+  .form-field select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+  }
+  .btn-primary {
+    width: 100%;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 9999px;
+    padding: .55rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .13s ease-out;
+    margin-top: .25rem;
+  }
+  .btn-primary:hover {
+    background: #1d4ed8;
+  }
+  .feedback {
+    text-align: center;
+    margin-top: .9rem;
+    font-size: .85rem;
+  }
+  .helper-text {
+    text-align: center;
+    margin-top: .7rem;
+    font-size: .78rem;
+    color: #94a3b8;
+  }
+  .role-hint {
+    font-size: .7rem;
+    color: #94a3b8;
+    margin-top: .15rem;
+    display: block;
+  }
+  @media (max-width: 520px) {
+    .auth-shell {
+      margin: 1.5rem 1rem 3rem;
+    }
+    .auth-card {
+      border-radius: 14px;
+    }
+  }
+  </style>
 </head>
 <body>
 
-<header>
-  <h1>Library Management System</h1>
-  <nav>
-    <ul>
-      <li><a href="index.php">Home</a></li>
-      <li><a href="catalog.php">Catalog</a></li>
-      <li><a href="login.php">Login</a></li>
-      <li><a href="signup.php">Sign Up</a></li>
-      <li><a href="contact.php">Contact Us</a></li>
-    </ul>
-  </nav>
-</header>
+<?php
+include "nav.php"
+?>
 
-<main>
-  <form class="form-box" id="signupForm" name="Registration" method="post" action="signup.php" novalidate>
+<main class="auth-shell">
+  <div class="auth-card">
     <h2>Create Your Library Account</h2>
-    <label>Full Name:</label>
-    <!-- ENT_QUOTES is a flag for the method htmlspecialchars() that tells it to escape both single and double quotes. -->
-    <input type="text" id="fullName" name="name" required value="<?= htmlspecialchars($_POST['name'] ?? '', ENT_QUOTES) ?>">
-    
-    <label>Email:</label>
-    <input type="email" id="email" name="email" required value="<?= htmlspecialchars($_POST['email'] ?? '', ENT_QUOTES) ?>">
-    
-    <label>Password:</label>
-    <input type="password" id="password" name="password" required>
-    
-    <label>Role:</label>
-    <select id="role" name="role" required>
-      <?php
-      // function that echoes an option for each role when selecting a role during the signup process.
-        $currentRole = $_POST['role'] ?? 'Member';
-        foreach (['Member','Admin','Librarian'] as $r) {
-          $sel = ($currentRole === $r) ? 'selected' : '';
-          echo "<option value=\"$r\" $sel>$r</option>";
-        }
-      ?>
-    </select>
-    
-    <button type="submit" name="submit">Register</button>
-  </form>
-      <!-- convert the php variables msgColor and signupMessage to html entities -->
-  <p id="signupMessage" style="text-align:center;color:<?= htmlspecialchars($msgColor) ?>;">
-    <?= htmlspecialchars($signupMessage) ?>
-  </p>
+    <p class="auth-subtitle">Join the library to reserve books, view loans, and get updates.</p>
+    <form id="signupForm" name="Registration" method="post" action="signup.php" novalidate>
+      <div class="form-field">
+        <label for="fullName">Full Name</label>
+        <input
+          type="text"
+          id="fullName"
+          name="name"
+          required
+          value="<?= htmlspecialchars($_POST['name'] ?? '', ENT_QUOTES) ?>">
+      </div>
+
+      <div class="form-field">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          required
+          value="<?= htmlspecialchars($_POST['email'] ?? '', ENT_QUOTES) ?>">
+      </div>
+
+      <div class="form-field">
+        <label for="password">Password <span style="color:#94a3b8;font-weight:400;">(min. 8 characters)</span></label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          required>
+      </div>
+
+      <div class="form-field">
+        <label for="role">Account Type</label>
+        <select id="role" name="role" required>
+          <?php
+            $currentRole = $_POST['role'] ?? 'Member';
+            foreach (['Member','Admin','Librarian'] as $r) {
+              $sel = ($currentRole === $r) ? 'selected' : '';
+              echo "<option value=\"$r\" $sel>$r</option>";
+            }
+          ?>
+        </select>
+        <span class="role-hint">Most users should select “Member”.</span>
+      </div>
+
+      <button type="submit" name="submit" class="btn-primary">
+        Create Account
+      </button>
+    </form>
+    <p class="feedback" style="color:<?= htmlspecialchars($msgColor) ?>;">
+      <?= htmlspecialchars($signupMessage) ?>
+    </p>
+    <p class="helper-text">
+      Already have an account? <a href="login.php" style="color:#2563eb;text-decoration:none;">Log in</a>
+    </p>
+  </div>
 </main>
 </body>
 </html>

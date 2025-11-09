@@ -122,45 +122,180 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Member Dashboard</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      background: #f3f4f6;
+    }
+    .member-shell {
+      max-width: 1100px;
+      margin: 2.2rem auto;
+      padding: 0 1rem 2.2rem;
+    }
+    .member-header {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 60%);
+      border-radius: 16px;
+      padding: 1.2rem 1.5rem 1.1rem;
+      color: #fff;
+      box-shadow: 0 18px 30px rgba(37,99,235,.22);
+      margin-bottom: 1.6rem;
+    }
+    .member-header h2 {
+      margin: 0 0 .25rem;
+    }
+    .member-header p {
+      margin: 0;
+      color: rgba(255,255,255,.85);
+      font-size: .9rem;
+    }
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.6rem;
+    }
+    .quick-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 1rem .9rem;
+      border: 1px solid rgba(148,163,184,.18);
+      box-shadow: 0 10px 20px rgba(15,23,42,.02);
+    }
+    .quick-card h3 {
+      margin: 0 0 .35rem;
+      font-size: .93rem;
+    }
+    .quick-card p {
+      margin: 0 0 .4rem;
+      color: #6b7280;
+      font-size: .78rem;
+    }
+    .quick-card a {
+      display: inline-block;
+      font-size: .78rem;
+      font-weight: 600;
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .account-grid {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 1.2rem;
+    }
+    @media (max-width: 900px) {
+      .account-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .panel {
+      background: #fff;
+      border-radius: 14px;
+      padding: 1.05rem 1rem .9rem;
+      border: 1px solid rgba(148,163,184,.18);
+      box-shadow: 0 10px 20px rgba(15,23,42,.03);
+    }
+    .panel h3 {
+      margin-top: 0;
+      margin-bottom: .5rem;
+    }
+    .panel label {
+      display: block;
+      margin-top: .55rem;
+      font-size: .84rem;
+      font-weight: 600;
+    }
+    .panel input {
+      width: 100%;
+      margin-top: .3rem;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: .5rem .55rem;
+      font-size: .85rem;
+    }
+    .panel input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+    .panel button {
+      margin-top: .8rem;
+      background: #2563eb;
+      border: none;
+      color: #fff;
+      padding: .55rem 1.1rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .panel button:hover {
+      background: #1d4ed8;
+    }
+    .flash-msg {
+      margin-bottom: 1rem;
+      padding: .6rem .8rem;
+      border-radius: 10px;
+      font-size: .82rem;
+    }
+  </style>
 </head>
 <body>
 
 <?php include 'nav.php'; ?>
 
-<main>
-  <section>
-    <h2>Member Dashboard</h2>
-    <ul>
-      <li><a href="catalog.php">Search Books</a></li>
-      <li><a href="loans.php">My Loans</a></li>
-      <li><a href="reservations.php">My Reservations</a></li>
-      <li><a href="fines.php">Fines</a></li>
-    </ul>
+<main class="member-shell">
+  <div class="member-header">
+    <h2>Welcome back, <?= h($user['name'] ?? 'Member') ?> 👋</h2>
+    <p>Manage your account details, view your library activity, and keep your info up to date.</p>
+  </div>
+
+  <?php if (!empty($flash)): ?>
+    <p class="flash-msg" style="background: <?= h($flashColor)==='red' ? '#fee2e2' : '#dcfce7' ?>; color: <?= h($flashColor)==='red' ? '#b91c1c' : '#166534' ?>;">
+      <?= h($flash) ?>
+    </p>
+  <?php endif; ?>
+
+  <!-- quick actions -->
+  <section class="quick-links">
+    <div class="quick-card">
+      <h3>Search Books</h3>
+      <p>Find titles, authors, and more.</p>
+      <a href="catalog.php">Go to catalog -></a>
+    </div>
+    <div class="quick-card">
+      <h3>My Loans</h3>
+      <p>Check due dates & returns.</p>
+      <a href="loans.php">View loans -></a>
+    </div>
+    <div class="quick-card">
+      <h3>Reservations</h3>
+      <p>See reserved items.</p>
+      <a href="reservations.php">My reservations -></a>
+    </div>
+    <div class="quick-card">
+      <h3>Fines</h3>
+      <p>Pay outstanding fines.</p>
+      <a href="fines.php">View fines -></a>
+    </div>
   </section>
-    <h2>My Account</h2>
 
-    <?php if (!empty($flash)): ?> <!-- show feedback message when $flash is set -->
-      <p style="color: <?= htmlspecialchars($flashColor) ?>;"><?= htmlspecialchars($flash) ?></p>
-    <?php endif; ?>
-
-    <form method="post" class="form-box">
-      <h3>Profile - Change Your Name / Email</h3>
+  <!-- account management -->
+  <section class="account-grid">
+    <form method="post" class="panel">
+      <h3>Profile</h3>
+      <p style="margin:0 0 .6rem; color:#6b7280; font-size:.78rem;">Update your name or email address.</p>
       <label for="name">Full Name</label>
-      <!-- pre-fill with current name and escape any quotes -->
-      <input type="text" id="name" name="name" required value="<?= htmlspecialchars($user['name'] ?? '', ENT_QUOTES) ?>">
+      <input type="text" id="name" name="name" required value="<?= h($user['name'] ?? '') ?>">
 
       <label for="email">Email</label>
-      <!-- pre-fill with current email and escape any quotes -->
-      <input type="email" id="email" name="email" required value="<?= htmlspecialchars($user['email'] ?? '', ENT_QUOTES) ?>">
+      <input type="email" id="email" name="email" required value="<?= h($user['email'] ?? '') ?>">
 
       <button type="submit" name="update_profile">Save Changes</button>
     </form>
 
-    <form method="post" class="form-box">
+    <form method="post" class="panel">
       <h3>Change Password</h3>
+      <p style="margin:0 0 .6rem; color:#6b7280; font-size:.78rem;">Use at least 8 characters.</p>
       
       <label for="current_password">Current Password</label>
-      <!-- pre-fill with current password -->
       <input type="password" id="current_password" name="current_password" required>
 
       <label for="new_password">New Password</label>
@@ -171,6 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
 
       <button type="submit" name="change_password">Update Password</button>
     </form>
+  </section>
 </main>
 </body>
 </html>

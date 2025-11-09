@@ -172,25 +172,28 @@ if ($displayName === '') {
 </head>
 <body>
 
-<?php include 'nav.php'; ?>
+<header>
+  <h1>Admin Dashboard</h1>
+  <nav>
+    <ul>
+      <li><a href="admin.php">Dashboard</a></li>
+      <li><a href="role_management.php">Role Management</a></li>
+      <li><a href="system_config.php">System Config</a></li>
+      <li><a href="logs.php">Activity Logs</a></li>
+      <li><a href="logout.php" class="logout-btn">Logout</a></li>
+    </ul>
+  </nav>
+</header>
 
-<main class="dashboard-shell">
-  <section class="hero">
-    <div class="hero-body">
-      <p class="hero-pill">🛡️ Admin Dashboard</p>
-      <h2>Welcome, <?= h($displayName) ?></h2>
-      <p class="hero-text">
-        Manage user roles, configure system settings, review logs, and post announcements — all from your control panel.
-      </p>
-      <div class="hero-actions">
-        <a href="role_management.php" class="btn primary">Manage Roles</a>
-        <a href="system_config.php" class="btn ghost">System Config</a>
-      </div>
-    </div>
-    <div class="hero-card">
-      <p class="hero-card-title">Tip</p>
-      <p class="hero-card-value small">Review activity logs regularly for security.</p>
-    </div>
+<main>
+  <h2>Welcome, <?= h($displayName)?> </h2>
+  <section>
+    <ul class="task-list">
+      <li><a href="role_management.php">Manage User Roles</a></li>
+      <li><a href="system_config.php">Configure System</a></li>
+      <li><a href="logs.php">View Activity Logs</a></li>
+      <li><a href="announcements.php">Create Announcements</a></li>
+    </ul>
   </section>
 
   <!-- task grid -->

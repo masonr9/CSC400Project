@@ -37,17 +37,24 @@ if ($isLoggedIn) {
   $authText = 'Logout';
 }
 ?>
+<head>
+  <link rel="stylesheet" href="styles.css">
+</head>
 
-<header>
-  <h1>Library Management System</h1>
-  <nav>
-    <ul>
-      <li><a href="index.php">Home</a></li>
-      <li><a href="anounce.php">Annoucements</a></li>
-      <li><a href="catalog.php">Catalog</a></li>
-      <li><a href="<?= h($authHref) ?>"><?= h($authText) ?></a></li>
-      <li><a href="<?= h($accountHref) ?>"><?= h($accountText) ?></a></li>
-      <li><a href="contact.php">Contact Us</a></li>
-    </ul>
-  </nav>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <h1>Library Management System</h1>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="index.php">Home</a></li>
+        <li><a href="anounce.php">Announcements</a></li>
+        <li><a href="catalog.php">Catalog</a></li>
+        <li><a href="<?= h($authHref) ?>"><?= h($authText) ?></a></li>
+        <li><a href="<?= h($accountHref) ?>"><?= h($accountText) ?></a></li>
+        <li><a href="contact.php">Contact Us</a></li>
+      </ul>
+    </nav>
+  </div>
 </header>

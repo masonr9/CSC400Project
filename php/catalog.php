@@ -45,6 +45,62 @@ function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES); } // this help
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Library Catalog</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .catalog-shell {
+      max-width: 1100px;
+      margin: 1.75rem auto 3rem;
+      padding: 0 1.25rem;
+    }
+
+    .catalog-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .catalog-header h2 {
+      margin-bottom: .25rem;
+      font-size: 2rem;
+      color: #1f2937;
+    }
+
+    .catalog-header p {
+      color: #6b7280;
+      font-size: .95rem;
+    }
+
+    .catalog-search {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: .75rem;
+      padding: .6rem .6rem .6rem .8rem;
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 12px 35px rgba(15,23,42,0.03);
+    }
+
+    .catalog-search input {
+      flex: 1;
+      border: none;
+      font-size: .95rem;
+      outline: none;
+      background: transparent;
+    }
+
+    .catalog-search button {
+      background: #1d4ed8;
+      color: #fff;
+      border: none;
+      border-radius: .55rem;
+      padding: .5rem 1.15rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .catalog-search button:hover {
+      background: #153d9b;
+    }
+  </style>
 </head>
 <body>
 
