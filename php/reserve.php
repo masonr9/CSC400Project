@@ -1,5 +1,5 @@
 <?php
-session_start(); // starts or resumes the session so we can access $_SESSION 
+session_start(); // starts or resumes the session so we can access $_SESSION
 include "connect.php"; // this is where $database comes from
 
 if (!isset($_SESSION['user_id'])) { // if the user is not logged in
@@ -19,7 +19,7 @@ if ($bookId <= 0) { // so if the book is either invalid or missing
 }
 
 // ensure the book exists
-$stmt = mysqli_prepare($database, "SELECT book_id FROM books WHERE book_id = ? LIMIT 1"); // prepares a lookup query
+$stmt = mysqli_prepare($database, "SELECT book_id, title FROM books WHERE book_id = ? LIMIT 1"); // prepares a lookup query
 mysqli_stmt_bind_param($stmt, "i", $bookId); // binds the book id as an integer
 mysqli_stmt_execute($stmt); // execute the query
 $res = mysqli_stmt_get_result($stmt); // get the result set
@@ -63,6 +63,12 @@ $stmt = mysqli_prepare( // prepares an insert statement for a new reservation
 );
 mysqli_stmt_bind_param($stmt, "ii", $userId, $bookId); // binds the user id and book id as integers
 if (mysqli_stmt_execute($stmt)) {  // executes the insert statement if it succeeds
+  $who = $_SESSION['name'] ?? ('User#' . $userId); // fall back to User #id if session name is missing
+  $what = "Placed reservation for book #{$bookId} (\"{$book['title']}\")"; // include book title in the action text
+  $logStmt = mysqli_prepare($database, "INSERT INTO logs (`user`, `action`) VALUES (?, ?)");
+  mysqli_stmt_bind_param($logStmt, "ss", $who, $what);
+  mysqli_stmt_execute($logStmt);
+  mysqli_stmt_close($logStmt);
   $_SESSION['flash_msg'] = "Reservation placed successfully!";
   $_SESSION['flash_color'] = "green";
 } else { // in the case that the insert statement failed

@@ -1,5 +1,5 @@
 <?php
-session_start(); // start or resume the session so we can read and write to $_SESSION 
+session_start(); // start or resume the session so we can read and write to $_SESSION
 include "connect.php"; // this is where $database comes from
 
 // access control (Librarian/Admin only)
@@ -16,6 +16,18 @@ if (!in_array($role, ['Librarian','Admin'], true)) { // only Librarian/Admin may
 
 // helper function to escape output safely for HTML
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
+
+// Small helper function to write to logs
+function log_action(mysqli $db, string $what): void {
+  $who = $_SESSION['name'] ?? ('User#' . (int)($_SESSION['user_id'] ?? 0));
+  $stmt = mysqli_prepare($db, "INSERT INTO logs (`user`, `action`) VALUES (?, ?)");
+  if ($stmt) {
+    mysqli_stmt_bind_param($stmt, "ss", $who, $what);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+  }
+}
+
 
 $flash = $_SESSION['flash_msg'] ?? ''; // flash message from session
 $flashColor = $_SESSION['flash_color'] ?? 'green'; // flash color, default is green
@@ -77,6 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_book'])) { // if 
   );
 
   if (mysqli_stmt_execute($stmt)) { // attempt to insert the row
+    $newId = (int)mysqli_insert_id($database);
+    log_action($database, "Added book #{$newId} \"{$title}\" by {$author}");
     $_SESSION['flash_msg'] = "Book added successfully."; // success flash message
     $_SESSION['flash_color'] = "green"; // success color
   } else {
@@ -92,15 +106,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_book'])) { // if 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_book'])) { // if a delete action was posted
   $id = (int)($_POST['delete_book'] ?? 0); // get book id to delete
   if ($id > 0) { // only proceed for a positive id
-    // Attempt delete, it will fail if FK references exist unless ON DELETE CASCADE
-    $stmt = mysqli_prepare($database, "DELETE FROM books WHERE book_id = ?"); // prepare delete
-    mysqli_stmt_bind_param($stmt, "i", $id); // bind id as integer
-    mysqli_stmt_execute($stmt); // execute delete
-    $aff = mysqli_stmt_affected_rows($stmt); // store how many rows were removed
-    mysqli_stmt_close($stmt); // close statement
-    if ($aff > 0) { // if at least one row deleted
-      $_SESSION['flash_msg'] = "Book removed."; // success flash message
-      $_SESSION['flash_color'] = "green"; // success color
+    // Grab details for logging first
+    $titleForLog = '';
+    $authorForLog = '';
+    if ($stmtInfo = mysqli_prepare($database, "SELECT title, author FROM books WHERE book_id = ? LIMIT 1")) {
+      mysqli_stmt_bind_param($stmtInfo, "i", $id);
+      mysqli_stmt_execute($stmtInfo);
+      $resInfo = mysqli_stmt_get_result($stmtInfo);
+      if ($rowInfo = mysqli_fetch_assoc($resInfo)) {
+        $titleForLog  = (string)($rowInfo['title'] ?? '');
+        $authorForLog = (string)($rowInfo['author'] ?? '');
+      }
+      mysqli_stmt_close($stmtInfo);
+    }
+
+    // Attempt delete (may fail if FK constraints)
+    $stmt = mysqli_prepare($database, "DELETE FROM books WHERE book_id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $id);
+    mysqli_stmt_execute($stmt);
+    $aff = mysqli_stmt_affected_rows($stmt);
+    mysqli_stmt_close($stmt);
+
+    if ($aff > 0) {
+      // Log after successful removal
+      $desc = $titleForLog !== '' ? "Removed book #{$id} \"{$titleForLog}\" by {$authorForLog}"
+                                  : "Removed book #{$id}";
+      log_action($database, $desc);
+
+      $_SESSION['flash_msg'] = "Book removed.";
+      $_SESSION['flash_color'] = "green";
     } else {
       $_SESSION['flash_msg'] = "Unable to remove book (in use or not found)."; // failure flash message
       $_SESSION['flash_color'] = "red"; // error color
@@ -189,6 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_book'])) { // 
     $title, $author, $genre, $language, $isbn, $pubyearInt, $summary, $available, $id
   );
   if (mysqli_stmt_execute($stmt)) { // execute update
+    log_action($database, "Edited book #{$id} -> \"{$title}\" by {$author}");
     $_SESSION['flash_msg'] = "Book updated successfully."; // success flash message
     $_SESSION['flash_color'] = "green"; // success color
   } else {
@@ -238,10 +273,186 @@ mysqli_stmt_close($stmt); // close list statement
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manage Books</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      background: #f1f5f9;
+    }
+    header.topbar {
+      background: #0f172a;
+      color: #fff;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1);
+    }
+    header.topbar h1 {
+      font-size: 1.15rem;
+      margin: 0;
+    }
+    header.topbar nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      gap: 1rem;
+    }
+    header.topbar nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .page-shell {
+      max-width: 1200px;
+      margin: 1.5rem auto 2.5rem;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+    @media (max-width: 992px) {
+      .page-shell {
+        grid-template-columns: 1fr;
+      }
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(15,23,42,.04), 0 4px 6px rgba(15,23,42,.03);
+      padding: 1.25rem 1.25rem 1.4rem;
+    }
+    h2.page-title {
+      max-width: 1200px;
+      margin: 1rem auto 0.75rem;
+      font-size: 1.5rem;
+      color: #0f172a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .flash {
+      max-width: 1200px;
+      margin: .3rem auto 1rem;
+      padding: .65rem .9rem;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+    .flash.green { 
+      background: #dcfce7; 
+      color: #166534; 
+    }
+    .flash.red { 
+      background: #fee2e2; 
+      color: #b91c1c; 
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: .65rem;
+    }
+    .form-grid label {
+      font-weight: 500;
+      font-size: .82rem;
+      color: #0f172a;
+    }
+    .form-grid input,
+    .form-grid textarea {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: .45rem .6rem;
+      font-size: .85rem;
+      background: #fff;
+    }
+    .form-grid textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: .5rem .85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: .85rem;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+    .btn-link {
+      background: transparent;
+      border: none;
+      color: #2563eb;
+      cursor: pointer;
+      font-size: .8rem;
+      text-decoration: underline;
+    }
+    .search-card form {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+    .search-card input {
+      flex: 1 1 220px;
+    }
+    .table-card h3 {
+      margin-bottom: .65rem;
+      font-size: 1rem;
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .78rem;
+      background: #fff;
+    }
+    table.data-table thead {
+      background: #eff3fb;
+    }
+    table.data-table th,
+    table.data-table td {
+      padding: .55rem .5rem;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: top;
+    }
+    table.data-table th {
+      text-align: left;
+      font-weight: 600;
+      color: #475569;
+    }
+    table.data-table tbody tr:hover {
+      background: #f8fafc;
+    }
+    .badge-yes {
+      background: #dcfce7;
+      color: #166534;
+      padding: .2rem .4rem;
+      border-radius: 9999px;
+      font-size: .7rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .badge-no {
+      background: #fee2e2;
+      color: #b91c1c;
+      padding: .2rem .4rem;
+      border-radius: 9999px;
+      font-size: .7rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .actions {
+      display: flex;
+      gap: .25rem;
+      flex-wrap: wrap;
+    }
+  </style> 
 </head>
 <body>
 
-<header>
+<header class="topbar">
   <h1>Library Management System</h1>
   <nav>
     <ul>
@@ -251,159 +462,165 @@ mysqli_stmt_close($stmt); // close list statement
   </nav>
 </header>
 
-<main class="container">
-  <h2>Manage Books</h2>
+<h2 class="page-title">Manage Books</h2>
 
   <?php if ($flash): ?> <!-- If a flash message exists -->
     <p style="color: <?= h($flashColor) ?>;"><?= h($flash) ?></p> <!-- show the flash message in chosen color -->
   <?php endif; ?> <!-- End flash block -->
 
-  <!-- Add or Edit Form -->
-  <section class="form-box" style="margin-bottom:1rem;">
-    <?php if ($editRow): ?> <!-- if editing an existing book -->
-      <h3>Edit Book</h3>
-      <form method="post" action="manage_books.php">
-        <input type="hidden" name="book_id" value="<?= (int)$editRow['book_id'] ?>"> <!-- Pass the book id-->
-        <div class="grid-2"> <!-- Grid layout for inputs -->
+  <div class="page-shell">
+    <!-- left-side: Add/Edit -->
+    <section class="card">
+      <?php if ($editRow): ?>
+        <h3 style="margin-top:0;margin-bottom:.5rem;">Edit Book</h3>
+        <form method="post" action="manage_books.php" class="form-grid">
+          <input type="hidden" name="book_id" value="<?= (int)$editRow['book_id'] ?>">
           <div>
-            <label>Book Title:</label>
-            <input type="text" name="title" required value="<?= h($editRow['title']) ?>"> <!-- title input -->
+            <label>Book Title</label>
+            <input type="text" name="title" required value="<?= h($editRow['title']) ?>">
           </div>
           <div>
-            <label>Author:</label>
+            <label>Author</label>
             <input type="text" name="author" required value="<?= h($editRow['author']) ?>">
           </div>
           <div>
-            <label>Genre:</label>
+            <label>Genre</label>
             <input type="text" name="genre" value="<?= h($editRow['genre']) ?>">
           </div>
           <div>
-            <label>Language:</label>
+            <label>Language</label>
             <input type="text" name="language" value="<?= h($editRow['language']) ?>">
           </div>
           <div>
-            <label>ISBN:</label>
+            <label>ISBN</label>
             <input type="text" name="isbn" value="<?= h($editRow['isbn']) ?>">
           </div>
           <div>
-            <label>Publication Year:</label>
-            <input type="number" name="publication_year" min="0" value="<?= h($editRow['publication_year']) ?>">
+            <label>Publication Year</label>
+            <input type="number" min="0" name="publication_year" value="<?= h($editRow['publication_year']) ?>">
           </div>
           <div>
-            <label>Available Quantity:</label>
-            <input type="number" name="available_qty" min="0" value="<?= ((int)$editRow['available'] === 1 ? 1 : 0) ?>">
-            <small class="muted">If &gt;0, sets <code>available = TRUE</code>.</small> <!-- Hint about available flag -->
+            <label>Available Quantity</label>
+            <input type="number" min="0" name="available_qty" value="<?= ((int)$editRow['available'] === 1 ? 1 : 0) ?>">
+            <small style="color:#94a3b8;">If &gt;0, book is marked available.</small>
           </div>
-          <div style="grid-column:1/-1;">
-            <label>Summary:</label>
+          <div>
+            <label>Summary</label>
             <textarea name="summary"><?= h($editRow['summary']) ?></textarea>
           </div>
-        </div>
-        <div style="margin-top:.75rem;">
-          <button type="submit" name="update_book">Save Changes</button>
-          <a href="manage_books.php" class="btn-link">Cancel</a>
-        </div>
-      </form>
-    <?php else: ?> <!-- else, show Add New form -->
-      <h3>Add New Book</h3>
-      <form method="post" action="manage_books.php">
-        <div class="grid-2">
+          <div style="display:flex;gap:.5rem;margin-top:.4rem;">
+            <button type="submit" name="update_book" class="btn-primary">Save Changes</button>
+            <a href="manage_books.php" class="btn-link">Cancel</a>
+          </div>
+        </form>
+      <?php else: ?>
+        <h3 style="margin-top:0;margin-bottom:.5rem;">Add New Book</h3>
+        <form method="post" action="manage_books.php" class="form-grid">
           <div>
-            <label>Book Title:</label>
+            <label>Book Title</label>
             <input type="text" name="title" required>
           </div>
           <div>
-            <label>Author:</label>
+            <label>Author</label>
             <input type="text" name="author" required>
           </div>
           <div>
-            <label>Genre:</label>
+            <label>Genre</label>
             <input type="text" name="genre">
           </div>
           <div>
-            <label>Language:</label>
+            <label>Language</label>
             <input type="text" name="language">
           </div>
           <div>
-            <label>ISBN:</label>
+            <label>ISBN</label>
             <input type="text" name="isbn">
           </div>
           <div>
-            <label>Publication Year:</label>
-            <input type="number" name="publication_year" min="0">
+            <label>Publication Year</label>
+            <input type="number" min="0" name="publication_year">
           </div>
           <div>
-            <label>Available Quantity:</label>
-            <input type="number" name="available_qty" min="0" value="1">
-            <small class="muted">If &gt;0, sets <code>available = TRUE</code>.</small> <!-- hint about available flag -->
+            <label>Available Quantity</label>
+            <input type="number" min="0" name="available_qty" value="1">
+            <small style="color:#94a3b8;">If &gt;0, book is marked available.</small>
           </div>
-          <div style="grid-column:1/-1;">
-            <label>Summary:</label>
+          <div>
+            <label>Summary</label>
             <textarea name="summary" placeholder="Short synopsis..."></textarea>
           </div>
-        </div>
-        <div style="margin-top:.75rem;">
-          <button type="submit" name="add_book">Add Book</button>
-        </div>
-      </form>
-    <?php endif; ?>
-  </section>
+          <div>
+            <button type="submit" name="add_book" class="btn-primary">Add Book</button>
+          </div>
+        </form>
+      <?php endif; ?>
+    </section>
 
-  <!-- Search -->
-  <section class="form-box" style="margin-bottom: .5rem;">
-    <form method="get" action="manage_books.php">
-      <label for="q"><strong>Search Books:</strong></label>
-      <input type="text" id="q" name="q" placeholder="Type to search by title, author, or ISBN..." value="<?= h($q) ?>">
-      <button type="submit">Search</button>
-      <?php if ($q !== ''): ?> <!-- if a query is active -->
-        <a href="manage_books.php" class="btn-link">Clear</a> <!-- clear search link -->
-      <?php endif; ?> <!-- End clear toggle -->
-    </form>
-  </section>
+    <!-- right side: Search + Table -->
+    <section style="display:flex;flex-direction:column;gap:1rem;">
+      <div class="card search-card">
+        <form method="get" action="manage_books.php">
+          <label for="q" style="font-weight:600;">Search Books</label>
+          <input type="text" id="q" name="q" placeholder="Search by title, author, or ISBN..." value="<?= h($q) ?>">
+          <button type="submit" class="btn-primary">Search</button>
+          <?php if ($q !== ''): ?>
+            <a href="manage_books.php" class="btn-link">Clear</a>
+          <?php endif; ?>
+        </form>
+      </div>
 
-  <!-- Catalog Table -->
-  <h3>Book Catalog</h3>
-  <?php if (empty($rows)): ?> <!-- if no results -->
-    <p class="muted">No books found.</p> <!-- show empty state -->
-  <?php else: ?> <!-- else render table -->
-    <table class="list" id="bookTable">
-      <thead>
-        <tr>
-          <th style="width:18%;">Title</th>
-          <th style="width:14%;">Author</th>
-          <th style="width:10%;">Genre</th>
-          <th style="width:10%;">Language</th>
-          <th style="width:12%;">ISBN</th>
-          <th style="width:8%;">Year</th>
-          <th>Summary</th>
-          <th style="width:8%;">Available</th>
-          <th style="width:12%;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-      <?php foreach ($rows as $b): ?> <!-- loop each book row -->
-        <tr>
-          <td><?= h($b['title']) ?></td>
-          <td><?= h($b['author']) ?></td>
-          <td><?= h($b['genre']) ?></td>
-          <td><?= h($b['language']) ?></td>
-          <td><?= h($b['isbn']) ?></td>
-          <td><?= h($b['publication_year']) ?></td>
-          <td><?= h(mb_strimwidth($b['summary'] ?? '', 0, 160, '…')) ?></td> <!-- truncated summary -->
-          <td><?= ((int)$b['available'] === 1 ? 'Yes' : 'No') ?></td>
-          <td class="actions">
-            <a href="manage_books.php?edit=<?= (int)$b['book_id'] ?>" class="btn-link">Edit</a> <!-- edit link -->
-            <form method="post" action="manage_books.php" style="display:inline;" onsubmit="return confirm('Remove this book?');"> <!-- delete form -->
-              <input type="hidden" name="delete_book" value="<?= (int)$b['book_id'] ?>"> <!-- hidden id -->
-              <button type="submit" class="btn-link">Remove</button> <!-- submit delete -->
-            </form>
-          </td>
-        </tr>
-      <?php endforeach; ?> <!-- end loop -->
-      </tbody>
-    </table>
-  <?php endif; ?> <!-- end results table -->
-
-</main>
+      <div class="card table-card">
+        <h3>Book Catalog</h3>
+        <?php if (empty($rows)): ?>
+          <p class="muted">No books found.</p>
+        <?php else: ?>
+          <div style="overflow-x:auto;">
+            <table class="data-table" id="bookTable">
+              <thead>
+                <tr>
+                  <th style="min-width:140px;">Title</th>
+                  <th style="min-width:120px;">Author</th>
+                  <th>Genre</th>
+                  <th>Lang</th>
+                  <th>ISBN</th>
+                  <th>Year</th>
+                  <th>Summary</th>
+                  <th>Avail</th>
+                  <th style="min-width:110px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+              <?php foreach ($rows as $b): ?>
+                <tr>
+                  <td><?= h($b['title']) ?></td>
+                  <td><?= h($b['author']) ?></td>
+                  <td><?= h($b['genre']) ?></td>
+                  <td><?= h($b['language']) ?></td>
+                  <td><?= h($b['isbn']) ?></td>
+                  <td><?= h($b['publication_year']) ?></td>
+                  <td><?= h(mb_strimwidth($b['summary'] ?? '', 0, 140, '…')) ?></td>
+                  <td>
+                    <?php if ((int)$b['available'] === 1): ?>
+                      <span class="badge-yes">Yes</span>
+                    <?php else: ?>
+                      <span class="badge-no">No</span>
+                    <?php endif; ?>
+                  </td>
+                  <td class="actions">
+                    <a href="manage_books.php?edit=<?= (int)$b['book_id'] ?>" class="btn-link">Edit</a>
+                    <form method="post" action="manage_books.php" style="display:inline;" onsubmit="return confirm('Remove this book?');">
+                      <input type="hidden" name="delete_book" value="<?= (int)$b['book_id'] ?>">
+                      <button type="submit" class="btn-link">Remove</button>
+                    </form>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php endif; ?>
+      </div>
+    </section>
+  </div>
 </body>
 </html>

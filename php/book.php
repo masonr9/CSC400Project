@@ -1,5 +1,5 @@
 <?php
-session_start(); // starts or resumes the session so we can access $_SESSION 
+session_start(); // starts or resumes the session so we can access $_SESSION
 include "connect.php"; // this is where $database comes from
 
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0; // reads book id from query string and cast to int, sets default to 0 if its missing
@@ -47,48 +47,73 @@ unset($_SESSION['flash_msg'], $_SESSION['flash_color']); // clear flash values s
 
 <?php include 'nav.php'; ?>
 
-<main class="container">
-  <p><a href="catalog.php">← Back to catalog</a></p>
+<main class="book-wrapper">
+  <p><a href="catalog.php" class="back-link"><- Back to catalog</a></p>
 
   <?php if ($flash): ?>
-    <p style="color: <?= h($flashColor) ?>;"><?= h($flash) ?></p> <!-- shows flash text in the chosen color-->
+    <p style="color: <?= h($flashColor) ?>; margin-bottom:.75rem;"><?= h($flash) ?></p> <!-- shows flash text in the chosen color-->
   <?php endif; ?>
 
-  <h2><?= h($book['title']) ?></h2>
-  <p class="muted">by <?= h($book['author'] ?? 'Unknown') ?></p> <!-- show author or unknown if empty-->
-  <div class="badge"><?= $book['available'] ? 'Available' : 'Checked Out' ?></div> <!-- Status badge based on boolean available -->
+  <div class="book-card">
+    <div class="book-header">
+      <div class="book-title-block">
+        <h2><?= h($book['title']) ?></h2>
+        <p>by <?= h($book['author'] ?? 'Unknown') ?></p>
+      </div>
+      <div>
+        <?php if ($book['available']): ?>
+          <span class="badge available">Available</span>
+        <?php else: ?>
+          <span class="badge unavailable">Checked Out</span>
+        <?php endif; ?>
+      </div>
+    </div>
 
-  <div class="details">
-    <?php if (!empty($book['genre'])): ?> <!-- only show genre if present-->
-      <div><strong>Genre:</strong> <?= h($book['genre']) ?></div>
+    <div class="book-meta-grid">
+      <?php if (!empty($book['genre'])): ?>
+        <div class="book-meta-item">
+          <small>Genre</small>
+          <span><?= h($book['genre']) ?></span>
+        </div>
+      <?php endif; ?>
+      <?php if (!empty($book['language'])): ?>
+        <div class="book-meta-item">
+          <small>Language</small>
+          <span><?= h($book['language']) ?></span>
+        </div>
+      <?php endif; ?>
+      <?php if (!empty($book['isbn'])): ?>
+        <div class="book-meta-item">
+          <small>ISBN</small>
+          <span><?= h($book['isbn']) ?></span>
+        </div>
+      <?php endif; ?>
+      <?php if (!empty($book['publication_year'])): ?>
+        <div class="book-meta-item">
+          <small>Publication Year</small>
+          <span><?= h($book['publication_year']) ?></span>
+        </div>
+      <?php endif; ?>
+    </div>
+
+    <?php if (!empty($book['summary'])): ?>
+      <h3 class="section-title">Summary</h3>
+      <div class="book-summary">
+        <?= nl2br(h($book['summary'])) ?>
+      </div>
     <?php endif; ?>
-    <?php if (!empty($book['language'])): ?> <!-- only show language if present-->
-      <div><strong>Language:</strong> <?= h($book['language']) ?></div>
-    <?php endif; ?>
-    <?php if (!empty($book['isbn'])): ?> <!-- only show ISBN if present-->
-      <div><strong>ISBN:</strong> <?= h($book['isbn']) ?></div>
-    <?php endif; ?>
-    <?php if (!empty($book['publication_year'])): ?> <!-- only show publication year if present -->
-      <div><strong>Publication Year:</strong> <?= h($book['publication_year']) ?></div>
-    <?php endif; ?>
+
+    <div class="actions-bar">
+      <?php if (isset($_SESSION['user_id'])): ?>
+        <form method="post" action="reserve.php" style="display:inline;">
+          <input type="hidden" name="book_id" value="<?= (int)$book['book_id'] ?>">
+          <button type="submit" class="primary-btn">Reserve this book</button>
+        </form>
+      <?php else: ?>
+        <p class="muted-action">Please <a href="login.php">log in</a> to reserve this book.</p>
+      <?php endif; ?>
+    </div>
   </div>
-
-  <?php if (!empty($book['summary'])): ?>
-    <h3 style="margin-top:1rem;">Summary</h3>
-    <p><?= nl2br(h($book['summary'])) ?></p> <!-- summary text, escaped and with newlines convert to <br>-->
-  <?php endif; ?>
-
-  <!-- Reserve button -->
-   <div style="margin-top:1rem;">
-    <?php if (isset($_SESSION['user_id'])): ?> <!-- if user is logged in, show reserve form-->
-      <form method="post" action="reserve.php" style="display:inline;"> <!-- POST to reserve handler -->
-        <input type="hidden" name="book_id" value="<?= (int)$book['book_id'] ?>"> <!-- pass current book id as hidden field-->
-        <button type="submit">Reserve this book</button> <!-- submit to create reservation -->
-      </form>
-    <?php else: ?> <!-- if not logged in, prompt to log in-->
-      <p class="muted">Please <a href="login.php">log in</a> to reserve this book.</p>
-    <?php endif; ?>
-   </div>
 </main>
 </body>
 </html>

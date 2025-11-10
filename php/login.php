@@ -1,6 +1,6 @@
 <?php
   session_start();
-  include "connect.php"; // this is where $database comes from 
+  include "connect.php"; // this is where $database comes from
 
   $loginMessage = ""; // this is the message that will be shown to the user if it is successful or has errors
   $msgColor = "red"; // default message color
@@ -24,7 +24,7 @@
 
       // if a user row was found, it will fetch it as an associative array
       if ($row = mysqli_fetch_assoc($result)) {
-        if ($password === $row['password']) { // compare passwords
+        if (password_verify($password, $row['password'])) { // compare passwords
           session_regenerate_id(true); // prevent session fixation by regenerating the session ID
           // store user credentials in the session
           $_SESSION['user_id'] = $row['user_id'];
@@ -58,33 +58,118 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+  .login-wrapper {
+    max-width: 420px;
+    margin: 2.5rem auto 0;
+  }
+
+  .login-card {
+    background: #fff;
+    padding: 1.75rem 1.5rem 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    border: 1px solid #e5e7eb;
+  }
+
+  .login-card h2 {
+    margin-top: 0;
+    margin-bottom: .75rem;
+    font-size: 1.4rem;
+    text-align: center;
+  }
+
+  .login-subtitle {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #6b7280;
+    font-size: .9rem;
+  }
+
+  .login-card label {
+    display: block;
+    margin-bottom: .35rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .login-card input[type="email"],
+  .login-card input[type="password"] {
+    width: 100%;
+    padding: .5rem .6rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: .95rem;
+  }
+
+  .login-card input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+  }
+
+  .login-card button {
+    width: 100%;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    padding: .55rem 0;
+    border-radius: 6px;
+    font-size: .95rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background .15s ease-in-out;
+  }
+
+  .login-card button:hover {
+    background: #1d4ed8;
+  }
+
+  .login-footer {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: .85rem;
+    color: #6b7280;
+  }
+
+  .login-footer a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .login-footer a:hover {
+    text-decoration: underline;
+  }
+
+  .login-message {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: .9rem;
+  }
+  </style>
 </head>
 <body>
 
-<header>
-  <h1>Library Management System</h1>
-  <nav>
-    <ul>
-      <li><a href="index.php">Home</a></li>
-      <li><a href="catalog.php">Catalog</a></li>
-      <li><a href="login.php">Login</a></li>
-      <li><a href="signup.php">Sign Up</a></li>
-      <li><a href="contact.php">Contact Us</a></li>
-    </ul>
-  </nav>
-</header>
+<?php
+include "nav.php"
+?>
 
 <main>
-  <form class="form-box" id="loginForm" method="post" action="login.php">
-    <h2>Login to Your Account</h2>
-    <label for="loginEmail">Email:</label>
-    <input type="email" id="loginEmail" name="email" required value="<?= htmlspecialchars($_POST['email'] ?? '', ENT_QUOTES) ?>">
-    <label for="loginPassword">Password:</label>
-    <input type="password" id="loginPassword" name="password" required>
-    <button type="submit" name="submit">Login</button>
-  </form>
+  <div class="login-wrapper">
+    <form class="login-card" id="loginForm" method="post" action="login.php">
+      <h2>Sign in</h2>
+      <p class="login-subtitle">Access your library dashboard</p>
+      <label for="loginEmail">Email:</label>
+      <input type="email" id="loginEmail" name="email" required value="<?= htmlspecialchars($_POST['email'] ?? '', ENT_QUOTES) ?>">
+      <label for="loginPassword">Password:</label>
+      <input type="password" id="loginPassword" name="password" required>
+      <button type="submit" name="submit">Login</button>
+      <p class="login-footer">Don't have an account? | <a href="signup.php">Create one</a>
+    </form>
   <!-- convert the php variables msgColor and loginMessage to html entities -->
-  <p id="loginMessage" style="text-align:center;color:<?= htmlspecialchars($msgColor) ?>;">
+  <p id="loginMessage" class="login-message" style="text-align:center;color:<?= htmlspecialchars($msgColor) ?>;">
     <?= htmlspecialchars($loginMessage) ?>
   </p>
 </main>

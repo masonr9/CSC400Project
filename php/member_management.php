@@ -1,5 +1,5 @@
 <?php
-session_start(); // start or resume the session so we can read and write to $_SESSION state 
+session_start(); // start or resume the session so we can read and write to $_SESSION state
 include "connect.php"; // this is where $database come froms
 
 // Access control (Librarian/Admin only)
@@ -16,6 +16,16 @@ if (!in_array($role, ['Librarian','Admin'], true)) { // only librarian or admin 
 
 // small helper function to escape output safely for HTML
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES); }
+
+// Small helper function to write to logs
+function log_action(mysqli $db, string $what): void {
+  $who = $_SESSION['name'] ?? ('User#' . (int)($_SESSION['user_id'] ?? 0));
+  if ($stmt = mysqli_prepare($db, "INSERT INTO logs (`user`, `action`) VALUES (?, ?)")) {
+    mysqli_stmt_bind_param($stmt, "ss", $who, $what);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+  }
+}
 
 // flash helpers
 $flash = $_SESSION['flash_msg'] ?? ''; // pull any flash message from session
@@ -71,6 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_member'])) { // i
   mysqli_stmt_bind_param($stmt, "sss", $name, $email, $hashed); // bind name, email, hash
 
   if (mysqli_stmt_execute($stmt)) { // try to insert the row
+    $newId = (int)mysqli_insert_id($database);
+    log_action($database, "Added member #{$newId} \"{$name}\" ({$email})");
     $_SESSION['flash_msg'] = "Member added successfully."; // success message
     $_SESSION['flash_color'] = "green"; // success color
   } else {
@@ -110,6 +122,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_member'])) { /
   }
 
   // Attempt delete, will fail if there are FK references (loans/reservations/fines) without CASCADE
+  $forLogName = '';
+  $forLogEmail = '';
+  if ($info = mysqli_prepare($database, "SELECT name, email FROM users WHERE user_id = ? LIMIT 1")) {
+    mysqli_stmt_bind_param($info, "i", $targetId);
+    mysqli_stmt_execute($info);
+    $rs = mysqli_stmt_get_result($info);
+    if ($rowInfo = mysqli_fetch_assoc($rs)) {
+      $forLogName  = (string)($rowInfo['name'] ?? '');
+      $forLogEmail = (string)($rowInfo['email'] ?? '');
+    }
+    mysqli_stmt_close($info);
+  }
   $del = mysqli_prepare($database, "DELETE FROM users WHERE user_id = ? AND role = 'Member'"); // delete only member
   mysqli_stmt_bind_param($del, "i", $targetId); // bind id
   mysqli_stmt_execute($del); // execute delete
@@ -117,6 +141,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_member'])) { /
   mysqli_stmt_close($del); // close delete statement
 
   if ($affected > 0) { // if a row was deleted
+    // Write to logs after a successful removal
+    $desc = $forLogName !== '' ? "Removed member #{$targetId} \"{$forLogName}\" ({$forLogEmail})"
+                              : "Removed member #{$targetId}";
+    log_action($database, $desc);
+
     $_SESSION['flash_msg'] = "Member removed."; // success message
     $_SESSION['flash_color'] = "green"; // success color
   } else {

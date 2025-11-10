@@ -1,5 +1,5 @@
 <?php
-session_start(); // start or resume the session so we can manipulate session data 
+session_start(); // start or resume the session so we can manipulate session data
 $_SESSION = []; // clear all session variables in memory so you log the user out
 if (ini_get("session.use_cookies")) { // if PHP is configured to use a session cookie
   $params = session_get_cookie_params(); // get the current cookie parameters such as path or domain
