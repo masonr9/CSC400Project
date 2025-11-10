@@ -1,75 +1,190 @@
 <?php
-session_start(); // starts or resumes the session so we can read or write $_SESSION values
-include "connect.php"; // this is where $database comes from
+session_start();
+include "connect.php";
 
-// if the user is not logged in, it will block access and send them to the login page
-if (!isset($_SESSION['user_id'])) { // checks if a user_id exists in the session
-  header("Location: login.php"); // redirects you to login page
-  exit(); // stops executing the script after redirect
+// block access if not logged in
+if (!isset($_SESSION['user_id'])) {
+  header("Location: login.php");
+  exit();
 }
 
-$userId = (int) $_SESSION['user_id']; // gets the current user's id from the session and casts to int for safety
-// reads reservation_id from POST if its present, casts to int to prevent injection or invalid types, if not present, it defaults to 0 meaning invalid
+$userId = (int) $_SESSION['user_id'];
 $resId  = isset($_POST['reservation_id']) ? (int) $_POST['reservation_id'] : 0;
 
-// validate the incoming reservation id
-if ($resId <= 0) { // if the id is missing or invalid
-  $_SESSION['flash_msg'] = "Invalid reservation."; // stores an error message to show on the next page
-  $_SESSION['flash_color'] = "red";
-  header("Location: reservations.php"); // send the user back to the reservations page
-  exit();
-}
+$message = "";
+$color = "red";
 
-// Load the reservation (must belong to this user and be Pending) and grab book info for logging 
-$stmt = mysqli_prepare(
-  $database,
-  "SELECT r.reservation_id, r.book_id, b.title
-     FROM reservations r
-     JOIN books b ON b.book_id = r.book_id
-    WHERE r.reservation_id = ? AND r.user_id = ? AND r.status = 'Pending'
-    LIMIT 1"
-);
-mysqli_stmt_bind_param($stmt, "ii", $resId, $userId); // bind resid as int and userid as int
-mysqli_stmt_execute($stmt); // execute the select statement
-$res = mysqli_stmt_get_result($stmt); // get the result set
-$row = mysqli_fetch_assoc($res); // fetch a single row as an assocative array
-mysqli_stmt_close($stmt); // close the statement
-
-if (!$row) {
-  // Nothing matching this user and pending state
-  $_SESSION['flash_msg'] = "Unable to cancel this reservation.";
-  $_SESSION['flash_color'] = "red";
-  header("Location: reservations.php");
-  exit();
-}
-
-$bookId = (int)$row['book_id'];
-$bookTitle = $row['title'] ?? '';
-
-// it will only allow deleting user's own reservation when it's still pending
-$stmt = mysqli_prepare( // prepares a delete statement with parameters
-  $database,
-  "DELETE FROM reservations
-   WHERE reservation_id = ? AND user_id = ? AND status = 'Pending'" // it only deletes if it belongs to this user and has a status of pending
-);
-mysqli_stmt_bind_param($stmt, "ii", $resId, $userId); // binds the reservation id and user id as integers
-mysqli_stmt_execute($stmt); // executes the delete query
-
-if (mysqli_stmt_affected_rows($stmt) > 0) { // if at least one row was deleted meaning it was successful
-  $who = $_SESSION['name'] ?? ('User#' . $userId); // fall back to User #id if session name is missing
-  $what = "Cancelled reservation #{$resId} for book #{$bookId}" . ($bookTitle !== '' ? " (\"{$bookTitle}\")" : ""); // include book title in the action text
-  $logStmt = mysqli_prepare($database, "INSERT INTO logs (`user`, `action`) VALUES (?, ?)");
-  mysqli_stmt_bind_param($logStmt, "ss", $who, $what);
-  mysqli_stmt_execute($logStmt);
-  mysqli_stmt_close($logStmt);
-  $_SESSION['flash_msg'] = "Reservation cancelled."; // success message
-  $_SESSION['flash_color'] = "green";
+if ($resId <= 0) {
+  $message = "Invalid reservation.";
 } else {
-  // this means either not found, not owned by user, or not pending
-  $_SESSION['flash_msg'] = "Unable to cancel this reservation."; // error message to be displayed
-  $_SESSION['flash_color'] = "red";
-}
-mysqli_stmt_close($stmt); // closes the prepared statement 
+  // fetch reservation (must belong to user and be Pending)
+  $stmt = mysqli_prepare(
+    $database,
+    "SELECT r.reservation_id, r.book_id, b.title
+       FROM reservations r
+       JOIN books b ON b.book_id = r.book_id
+      WHERE r.reservation_id = ? AND r.user_id = ? AND r.status = 'Pending'
+      LIMIT 1"
+  );
+  mysqli_stmt_bind_param($stmt, "ii", $resId, $userId);
+  mysqli_stmt_execute($stmt);
+  $res = mysqli_stmt_get_result($stmt);
+  $row = mysqli_fetch_assoc($res);
+  mysqli_stmt_close($stmt);
 
-header("Location: reservations.php"); // redirects back to the reservations list to show the result
-exit();
+  if ($row) {
+    $bookId = (int)$row['book_id'];
+    $bookTitle = $row['title'] ?? '';
+
+    // delete pending reservation
+    $stmt = mysqli_prepare(
+      $database,
+      "DELETE FROM reservations
+       WHERE reservation_id = ? AND user_id = ? AND status = 'Pending'"
+    );
+    mysqli_stmt_bind_param($stmt, "ii", $resId, $userId);
+    mysqli_stmt_execute($stmt);
+
+    if (mysqli_stmt_affected_rows($stmt) > 0) {
+      // log cancellation
+      $who = $_SESSION['name'] ?? ('User#' . $userId);
+      $what = "Cancelled reservation #{$resId} for book #{$bookId}" . ($bookTitle !== '' ? " (\"{$bookTitle}\")" : "");
+      $logStmt = mysqli_prepare($database, "INSERT INTO logs (`user`, `action`) VALUES (?, ?)");
+      mysqli_stmt_bind_param($logStmt, "ss", $who, $what);
+      mysqli_stmt_execute($logStmt);
+      mysqli_stmt_close($logStmt);
+
+      $message = "Reservation for <strong>" . htmlspecialchars($bookTitle) . "</strong> has been cancelled successfully.";
+      $color = "green";
+    } else {
+      $message = "Unable to cancel this reservation.";
+    }
+    mysqli_stmt_close($stmt);
+  } else {
+    $message = "Reservation not found or already processed.";
+  }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cancel Reservation</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+  /* main shell */
+  .home-shell {
+    max-width: 1100px;
+    margin: 1.75rem auto 3rem;
+    padding: 0 1rem;
+  }
+
+  /* hero */
+  .hero {
+    background: radial-gradient(circle at top, #dbeafe 0%, #ffffff 40%, #ffffff 100%);
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    padding: 2.5rem 2rem;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 1.5rem;
+    align-items: center;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  }
+
+  .hero-body h2 {
+    font-size: 2.1rem;
+    margin: 0.4rem 0 0.6rem;
+    color: #111827;
+  }
+
+  .hero-text {
+    margin: 0;
+    color: #4b5563;
+    max-width: 480px;
+  }
+
+  .hero-pill {
+    display: inline-block;
+    background: #e0ecff;
+    color: #1d4ed8;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: .01em;
+  }
+
+  .hero-actions {
+    margin-top: 1.2rem;
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    border: none;
+    border-radius: .6rem;
+    padding: .55rem 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: .9rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+  }
+
+  .btn.primary {
+    background: #2563eb;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+  }
+
+  .btn.primary:hover {
+    background: #1d4ed8;
+  }
+
+  .btn.ghost {
+    background: #fff;
+    color: #1f2937;
+    border: 1px solid #e5e7eb;
+  }
+
+  .message-box {
+    text-align: center;
+    background: #fff;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    margin-top: 3rem;
+  }
+
+  .message-box p {
+    font-size: 1.1rem;
+  }
+
+  .message-box .btn {
+    margin-top: 1rem;
+  }
+
+  /* small screens */
+  @media (max-width: 768px) {
+    .hero {
+      grid-template-columns: 1fr;
+    }
+  }
+  </style>
+</head>
+<body>
+
+  <div class="home-shell">
+    <div class="message-box">
+      <p style="color: <?= $color === 'green' ? '#059669' : '#dc2626' ?>;"><?= $message ?></p>
+      <a href="reservations.php" class="btn primary">Back to Reservations</a>
+    </div>
+  </div>
+
+</body>
+</html>
+
