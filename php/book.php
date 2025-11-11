@@ -42,6 +42,31 @@ unset($_SESSION['flash_msg'], $_SESSION['flash_color']); // clear flash values s
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title><?= h($book['title']) ?> - Details</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .book-reviews { margin-top: 2rem; }
+    .book-reviews h3 { margin-bottom: .75rem; }
+    .book-reviews form textarea { width: 100%; max-width: 600px; display: block; margin-bottom: .5rem; }
+    .star-rating { text-align: left; margin-bottom: .5rem; }
+    .star { font-size: 25px; cursor: pointer; color: lightgray; display: inline-block; }
+    .review-box { background: #f9f9f9; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid #007bff; }
+    .book-wrapper { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+    .book-card { background: #fff; border-radius: 1rem; padding: 1.25rem 1.5rem 1.5rem; box-shadow: 0 4px 20px rgba(15, 23, 42, .05); }
+    .book-header { display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
+    .book-title-block h2 { margin: 0; }
+    .book-title-block p { margin: .25rem 0 0; color: #6b7280; }
+    .book-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .85rem; margin-top: 1.1rem; }
+    .book-meta-item small { display: block; font-size: .7rem; letter-spacing: .04em; color: #9ca3af; text-transform: uppercase; }
+    .book-meta-item span { font-weight: 600; }
+    .section-title { margin-top: 1.25rem; }
+    .book-summary { background: #f9fafb; border-radius: .75rem; padding: .75rem .85rem; line-height: 1.5; }
+    .actions-bar { margin-top: 1.25rem; }
+    .primary-btn { background: #dc2626; border: none; padding: .45rem .9rem; border-radius: .5rem; color: #fff; font-weight: 600; cursor: pointer; }
+    .primary-btn:hover { background: #b91c1c; }
+    .badge.available { background: #ecfdf3; color: #166534; padding: .25rem .65rem; border-radius: 9999px; font-size: .7rem; font-weight: 600; }
+    .badge.unavailable { background: #fef2f2; color: #b91c1c; padding: .25rem .65rem; border-radius: 9999px; font-size: .7rem; font-weight: 600; }
+    .back-link { text-decoration: none; color: #1f2937; font-size: .85rem; }
+    .back-link:hover { text-decoration: underline; }
+  </style>
 </head>
 <body>
 
@@ -113,6 +138,69 @@ unset($_SESSION['flash_msg'], $_SESSION['flash_color']); // clear flash values s
         <p class="muted-action">Please <a href="login.php">log in</a> to reserve this book.</p>
       <?php endif; ?>
     </div>
+    <div class="book-reviews">
+      <h3>📖 Book Reviews</h3>
+
+      <?php if (isset($_SESSION['user_id'])): ?>
+        <form method="POST" action="save_review.php" id="reviewForm">
+          <input type="hidden" name="book_id" value="<?= (int)$book['book_id'] ?>">
+          <div class="star-rating">
+            <span class="star" data-value="1">★</span>
+            <span class="star" data-value="2">★</span>
+            <span class="star" data-value="3">★</span>
+            <span class="star" data-value="4">★</span>
+            <span class="star" data-value="5">★</span>
+          </div>
+          <input type="hidden" id="rating" name="rating" value="0">
+          <textarea name="review_text" placeholder="Write your review..." rows="3" required></textarea>
+          <button type="submit" class="primary-btn" style="margin-top:.35rem;">Submit Review</button>
+        </form>
+      <?php else: ?>
+        <p class="muted-action">Please <a href="login.php">log in</a> to leave a review.</p>
+      <?php endif; ?>
+
+      <h4 style="margin-top:1.25rem;">Previous Reviews</h4>
+      <div id="reviews-list">
+        <?php
+          // make the book id available to the included file
+          $_GET['book_id'] = (int)$book['book_id'];
+          include 'view_reviews.php';
+        ?>
+      </div>
+    </div>
+    <!-- ====== END BOOK REVIEWS ====== -->
+
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      let currentRating = 0;
+      const stars = document.querySelectorAll('.star');
+      const ratingInput = document.getElementById('rating');
+      const reviewForm = document.getElementById('reviewForm');
+
+      stars.forEach(star => {
+        star.addEventListener('click', function() {
+          const value = parseInt(this.getAttribute('data-value'), 10);
+          currentRating = value;
+          ratingInput.value = value;
+          stars.forEach((s, idx) => {
+            s.style.color = idx < value ? 'gold' : 'lightgray';
+          });
+        });
+      });
+
+      if (reviewForm) {
+        reviewForm.addEventListener('submit', function(e) {
+          if (currentRating === 0) {
+            alert('Please select a star rating.');
+            e.preventDefault();
+          }
+        });
+      }
+    });
+    </script>
   </div>
 </main>
 </body>
