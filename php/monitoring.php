@@ -75,25 +75,28 @@ $current_status = file_exists($config_file) ? trim((string)file_get_contents($co
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>System Monitoring</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .page-title-bar {
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      border: 1px solid #eef2f7;
+      border-radius: 12px;
+      padding: 1.25rem 1.25rem 1rem;
+      box-shadow: 0 6px 18px rgba(15,23,42,.04);
+      margin-bottom: 1rem;
+    }
+    .page-title { margin: 0; font-size: 1.5rem; color: #111827; }
+    .page-subtitle { margin: .35rem 0 0; color: #6b7280; font-size: .95rem; }
+  </style>
 </head>
 <body>
 
-<header>
-  <h1>System Monitoring</h1>
-  <nav>
-    <ul style="display:flex;justify-content:center;">
-      <li><a href="admin.php">Dashboard</a></li>
-      <li><a href="role_management.php">Role Management</a></li>
-      <li><a href="system_config.php">System Config</a></li>
-      <li><a href="logs.php">Activity Logs</a></li>
-      <li><a href="announcements.php">Create Announcements</a></li>
-      <li><a href="logout.php" class="logout-btn">Logout</a></li>
-    </ul>
-  </nav>
-</header>
+<?php include 'admin_nav.php'; ?>
 
 <main class="container">
-  <h2>Welcome, <?= h($displayName) ?> (Admin)</h2>
+  <div class="page-title-bar">
+    <h2 class="page-title">System Monitoring</h2>
+    <p class="page-subtitle">Check counts of users, books, and recent log entries.</p>
+  </div>
 
   <section class="form-box">
     <h3>📊 System Overview</h3>

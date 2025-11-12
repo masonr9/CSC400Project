@@ -10,7 +10,7 @@ define('SMTP_USE', true);
 define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 587); // standard port for sending mail, it works with gmail, outlook
 define('SMTP_USER', 'ryanmason1127@gmail.com');
-define('SMTP_PASS', 'mqcg snim omyt kziz'); // Gmail app password
+define('SMTP_PASS', 'need this in order to send email'); // Gmail app password
 define('SMTP_FROM', 'ryanmason1127@gmail.com');
 define('SMTP_FROM_NAME', 'Library Management System');
 
@@ -158,56 +158,138 @@ mysqli_stmt_close($stmt); // close the prepared statement
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Overdue Tracking</title>
   <link rel="stylesheet" href="styles.css">
+  <title>Overdue Tracking</title>
+  <style>
+    /* Shell & hero */
+    .shell { 
+      max-width: 1100px; 
+      margin: 1.5rem auto 3rem; 
+      padding: 0 1rem; 
+    }
+    .hero {
+      background: radial-gradient(circle at top, #e5f0ff 0%, #ffffff 42%, #ffffff 100%);
+      border: 1px solid #e5e7eb; border-radius: 14px; padding: 1.5rem 1.25rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .hero-title { margin: 0; font-size: 1.5rem; color: #111827; }
+    .hero-sub   { margin: .15rem 0 0; color: #6b7280; }
+
+    /* Flash */
+    .flash { margin: 1rem 0; padding: .7rem .9rem; border-radius: 10px; font-weight: 600; }
+    .flash.green { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .flash.red   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+    /* Card container */
+    .card {
+      background: #fff;
+      border: 1px solid #eef2f7;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+      padding: 1.2rem 1.1rem;
+    }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; }
+    table.pretty { width: 100%; border-collapse: collapse; font-size: .95rem; }
+    table.pretty thead th {
+      text-align: left; padding: .65rem .6rem; color: #6b7280; font-weight: 700;
+      border-bottom: 1px solid #e5e7eb; white-space: nowrap;
+    }
+    table.pretty tbody td {
+      padding: .65rem .6rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle;
+    }
+    table.pretty tbody tr:hover { background: #fcfcfd; }
+
+    /* Pills / badges */
+    .pill {
+      display: inline-block; font-size: .75rem; font-weight: 700; letter-spacing: .02em;
+      padding: .2rem .6rem; border-radius: 9999px; border: 1px solid #fde68a; color: #92400e; background: #fffbeb;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: .35rem;
+      border: 1px solid #e5e7eb; background: #fff; color: #1f2937;
+      padding: .45rem .75rem; border-radius: 8px; cursor: pointer; text-decoration: none;
+      font-weight: 600; font-size: .88rem;
+    }
+    .btn:hover { background: #f9fafb; }
+    .btn-link { border: 0; background: transparent; color: #dc2626; font-weight: 700; cursor: pointer; }
+    .btn-link:hover { text-decoration: underline; }
+
+    /* Muted */
+    .muted { color: #6b7280; }
+
+    /* Responsive table: stack rows on small screens */
+    @media (max-width: 720px) {
+      .hero { flex-direction: column; align-items: flex-start; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+      table.pretty thead { display: none; }
+      table.pretty, table.pretty tbody, table.pretty tr, table.pretty td { display: block; width: 100%; }
+      table.pretty tr { border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: .65rem; background: #fff; }
+      table.pretty td { border-bottom: 0; padding: .55rem .75rem; }
+      table.pretty td::before {
+        content: attr(data-label);
+        display: block; font-size: .75rem; color: #6b7280; margin-bottom: .2rem; text-transform: uppercase;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<header>
-  <h1>Library Management System</h1>
-  <nav>
-    <ul>
-      <li><a href="librarian.php">Librarian Dashboard</a></li>
-      <li><a class="logout-btn" href="logout.php">Logout</a></li>
-    </ul>
-  </nav>
-</header>
+<?php include 'librarian_nav.php' ?>
 
-<main>
-  <h2>Overdue Tracking</h2>
-
-  <?php if ($flash): ?> <!-- if a flash message exists -->
-    <p style="color: <?= h($flashColor) ?>;"><?= h($flash) ?></p> <!-- show it with proper escapeing and color -->
+<main class="shell">
+  <div class="hero">
+    <div>
+      <h1 class="hero-title">Overdue Tracking</h1>
+      <p class="hero-sub">View active loans that passed their due date and send reminders.</p>
+    </div>
+    <span class="pill"><?= count($rows) ?> overdue</span>
+  </div>
+  <?php if ($flash): ?>
+    <div class="flash <?= h($flashColor) ?>"><?= h($flash) ?></div>
   <?php endif; ?>
 
-  <?php if (empty($rows)): ?> <!-- if there are no overdue loans -->
-    <p class="muted">No overdue loans at the moment.</p> <!-- show empty state -->
-  <?php else: ?> <!-- otherwise render the tables -->
-    <table class="list" id="overdueTable">
-      <thead>
-        <tr>
-          <th>Member</th>
-          <th>Book</th>
-          <th>Due Date</th>
-          <th>Reminder</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php foreach ($rows as $o): ?> <!-- loop through each overdue loan -->
-          <tr>
-            <td><?= h($o['member_name']) ?> <span class="muted">(<?= h($o['member_email']) ?>)</span></td>
-            <td><?= h($o['book_title']) ?></td>
-            <td><?= h($o['due_date']) ?></td>
-            <td>
-              <form method="post" action="overdue_tracking.php" style="display:inline;" onsubmit="return confirm('Send reminder?');">
-                <input type="hidden" name="remind_id" value="<?= (int)$o['loan_id'] ?>"> <!-- pass loan id -->
-                <button type="submit" class="btn-link">Send Reminder</button>
-              </form>
-            </td>
-          </tr>
-        <?php endforeach; ?> <!-- end loop -->
-      </tbody>
-    </table>
+  <?php if (empty($rows)): ?>
+    <div class="card">
+      <p class="muted">No overdue loans at the moment.</p>
+    </div>
+  <?php else: ?>
+    <section class="card">
+      <div class="table-wrap">
+        <table class="pretty" id="overdueTable">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Book</th>
+              <th>Due Date</th>
+              <th>Reminder</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($rows as $o): ?>
+              <tr>
+                <td data-label="Member">
+                  <?= h($o['member_name']) ?>
+                  <span class="muted"> (<?= h($o['member_email']) ?>)</span>
+                </td>
+                <td data-label="Book"><?= h($o['book_title']) ?></td>
+                <td data-label="Due Date"><?= h($o['due_date']) ?></td>
+                <td data-label="Reminder">
+                  <form method="post" action="overdue_tracking.php" style="display:inline;" onsubmit="return confirm('Send reminder?');">
+                    <input type="hidden" name="remind_id" value="<?= (int)$o['loan_id'] ?>">
+                    <button type="submit" class="btn-link">Send Reminder</button>
+                  </form>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    </section>
   <?php endif; ?>
 </main>
 

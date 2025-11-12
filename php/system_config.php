@@ -2,31 +2,30 @@
 session_start();
 require_once "connect.php";
 
-// only admin can access
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
+if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Admin') {
   header("Location: login.php");
   exit();
 }
 
+// Simple example: toggle maintenance mode file
 $config_file = "maintenance_status.txt";
 
-// handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   $status = $_POST['maintenance'];
   file_put_contents($config_file, $status);
-  $message = "Maintenance mode set to: " . strtoupper($status);
+  $message = "Maintenance mode set to: $status";
 }
 
-$current_status = file_exists($config_file) ? trim(file_get_contents($config_file)) : "off";
+$current_status = file_exists($config_file) ? file_get_contents($config_file) : "off";
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
   <title>System Configuration</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    .config-shell {
+       .config-shell {
       max-width: 700px;
       margin: 2rem auto 3rem;
       padding: 0 1rem;
@@ -126,7 +125,7 @@ $current_status = file_exists($config_file) ? trim(file_get_contents($config_fil
 </head>
 <body>
 
-<?php include 'nav.php'; ?>
+<?php include 'admin_nav.php'; ?>
 
 <main class="config-shell">
   <section class="hero">
@@ -152,7 +151,5 @@ $current_status = file_exists($config_file) ? trim(file_get_contents($config_fil
     </div>
   </section>
 </main>
-
 </body>
 </html>
-

@@ -10,7 +10,7 @@ define('SMTP_USE', true);
 define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 587); // standard port for sending mail, it works with gmail, outlook
 define('SMTP_USER', 'ryanmason1127@gmail.com');
-define('SMTP_PASS', 'mqcg snim omyt kziz'); // gmail app password
+define('SMTP_PASS', 'need this in order to send email'); // gmail app password
 define('SMTP_FROM', 'ryanmason1127@gmail.com');
 define('SMTP_FROM_NAME', 'Library Management System');
 
@@ -172,83 +172,328 @@ mysqli_stmt_close($stmt); // close select statement
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manage Announcements</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Layout shell */
+    .shell {
+      max-width: 1100px;
+      margin: 1.75rem auto 3rem;
+      padding: 0 1rem;
+    }
+
+    /* Page title */
+    .page-title-bar {
+      margin-bottom: 1rem;
+    }
+    .page-title {
+      margin: 0;
+      font-size: 1.6rem;
+      line-height: 1.25;
+      color: #111827;
+    }
+    .page-subtitle {
+      margin: .35rem 0 0;
+      color: #6b7280;
+      font-size: .95rem;
+    }
+
+    /* Flash alerts */
+    .alert {
+      border-radius: .6rem;
+      padding: .75rem 1rem;
+      margin: 1rem 0;
+      font-weight: 500;
+      border: 1px solid transparent;
+    }
+    .alert-success {
+      background: #ecfdf5;
+      color: #065f46;
+      border-color: #a7f3d0;
+    }
+    .alert-danger {
+      background: #fef2f2;
+      color: #991b1b;
+      border-color: #fecaca;
+    }
+
+    /* Cards */
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: .9rem;
+      box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
+    }
+    .card + .card { margin-top: 1rem; }
+    .mt-lg { margin-top: 1.25rem; }
+
+    .card-header {
+      padding: .9rem 1.1rem .75rem;
+      border-bottom: 1px solid #eef2f7;
+    }
+    .card-title {
+      margin: 0;
+      font-size: 1.05rem;
+      color: #111827;
+    }
+    .section-header { display: flex; align-items: center; gap: .6rem; }
+    .section-title { margin: 0; }
+
+    .card-body {
+      padding: 1rem 1.1rem 1.15rem;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      font-weight: 600;
+      font-size: .75rem;
+      padding: .2rem .55rem;
+      border-radius: 9999px;
+    }
+    .badge.soft {
+      color: #1f2937;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+    }
+
+    /* Forms */
+    .form-grid {
+      display: grid;
+      gap: .85rem;
+    }
+    .form-row { display: grid; gap: .4rem; width: 95%; }
+    .form-row label { color: #374151; }
+
+    .form-grid input[type="text"],
+    .form-grid textarea,
+    .inline-fields input[type="text"],
+    .inline-fields textarea {
+      width: 100%;
+      padding: .6rem .7rem;
+      border: 1px solid #e5e7eb;
+      border-radius: .55rem;
+      background: #fff;
+      color: #111827;
+      font-size: .95rem;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .form-grid textarea,
+    .inline-fields textarea { min-height: 120px; resize: vertical; }
+
+    .form-grid input:focus,
+    .form-grid textarea:focus,
+    .inline-fields input:focus,
+    .inline-fields textarea:focus {
+      outline: none;
+      border-color: #c7d2fe;
+      box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+    }
+
+    .form-actions {
+      margin-top: .35rem;
+      display: flex;
+      gap: .6rem;
+    }
+
+    /* Buttons */
+    .btn {
+      border: 1px solid transparent;
+      border-radius: .6rem;
+      padding: .55rem 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: .92rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      transition: transform .04s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+      user-select: none;
+    }
+    .btn:active { transform: translateY(1px); }
+
+    .btn.primary {
+      background: #2563eb;
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+    }
+    .btn.primary:hover { background: #1d4ed8; }
+
+    .btn.ghost {
+      background: #fff;
+      color: #1f2937;
+      border-color: #e5e7eb;
+    }
+    .btn.ghost:hover { background: #f9fafb; }
+
+    .btn-link {
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: #2563eb;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .btn-link:hover { text-decoration: underline; }
+    .btn-link.danger { color: #dc2626; }
+
+    /* Table wrapper */
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    /* Table */
+    .table {
+      width: 95%;
+      border-collapse: collapse;
+      font-size: .95rem;
+    }
+    .table thead th {
+      text-align: left;
+      background: #f9fafb;
+      color: #374151;
+      font-weight: 700;
+      border-bottom: 1px solid #e5e7eb;
+      padding: .7rem .65rem;
+      white-space: nowrap;
+    }
+    .table tbody td {
+      border-bottom: 1px solid #f1f5f9;
+      padding: .65rem;
+      vertical-align: top;
+      color: #111827;
+    }
+    .table tbody tr:hover { background: #fcfdff; }
+
+    /* Utility widths for columns */
+    .th-16 { width: 16%; }
+    .th-18 { width: 18%; }
+    .th-24 { width: 24%; }
+
+    /* Inline edit row */
+    .inline-form { display: inline-block; margin-right: .5rem; vertical-align: top; }
+    .inline-fields {
+      display: grid;
+      grid-template-columns: minmax(160px, 220px) minmax(220px, 420px);
+      gap: .5rem;
+      margin-bottom: .5rem;
+    }
+    .inline-actions { display: inline-flex; gap: .4rem; }
+
+    /* Mono timestamp */
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+    /* Muted text */
+    .muted { color: #6b7280; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .inline-fields {
+        grid-template-columns: 1fr;
+      }
+      .page-title { font-size: 1.35rem; }
+    }
+  </style>
 </head>
 <body>
 
-<header>
-  <h1>Library Management System</h1>
-  <nav>
-    <ul style="display:flex;justify-content:center;">
-      <li><a href="admin.php">Dashboard</a></li>
-      <li><a href="system_config.php">System Config</a></li>
-      <li><a href="logs.php">Logs</a></li>
-      <li><a href="role_management.php">Role Management</a></li>
-      <li><a href="monitoring.php">System Monitoring</a></li>
-      <li><a href="logout.php" class="logout-btn">Logout</a></li>
-    </ul>
-  </nav>
-</header>
+<?php include 'admin_nav.php'; ?>
 
-<main class="container">
-  <h2>📢 Manage Announcements</h2>
+<main class="shell">
+  <!-- Page header -->
+  <div class="page-title-bar">
+    <h2 class="page-title">📢 Manage Announcements</h2>
+    <p class="page-subtitle">Create, update, and notify members about important library news.</p>
+  </div>
 
+  <!-- Flash -->
   <?php if ($flash): ?>
-    <p style="color: <?= h($flashColor) ?>;"><?= h($flash) ?></p>
+    <div class="alert <?= $flashColor === 'red' ? 'alert-danger' : 'alert-success' ?>">
+      <?= h($flash) ?>
+    </div>
   <?php endif; ?>
 
   <!-- Add new announcement -->
-  <section>
-  <form method="POST" class="form-box">
-    <label>Title:</label>
-    <input type="text" name="title" required>
-    <label>Message:</label>
-    <div>
-    <textarea name="message" required></textarea>
-    <button type="submit" name="add">Add Announcement</button>
-  </form>
+  <section class="card mt-lg">
+    <div class="card-header section-header">
+      <h3 class="card-title section-title">Add Announcement</h3>
+    </div>
+    <div class="card-body">
+      <form method="POST" class="form-grid">
+        <div class="form-row">
+          <label for="title"><strong>Title</strong></label>
+          <input type="text" id="title" name="title" required>
+        </div>
+
+        <div class="form-row">
+          <label for="message"><strong>Message</strong></label>
+          <textarea id="message" name="message" rows="5" required></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" name="add" class="btn primary">Add Announcement</button>
+        </div>
+      </form>
+    </div>
   </section>
 
-<section style="margin-top:20px">
-  <h3>Existing Announcements</h3>
-  <?php if (empty($rows)): ?>
-    <p class="muted">No announcements yet.</p>
-  <?php else: ?>
-    <table class="list">
-      <thead>
-        <tr>
-          <th style="width:18%;">Title</th>
-          <th>Message</th>
-          <th style="width:16%;">Date</th>
-          <th style="width:30%;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php foreach ($rows as $row): ?>
-          <tr>
-            <td><?= h($row['title']) ?></td>
-            <td><?= nl2br(h($row['message'])) ?></td>
-            <td><?= h($row['created_at'] ?? '') ?></td>
-            <td>
-              <!-- Inline edit form -->
-              <form method="POST" class="form-inline" style="display:inline-block; margin-right:.5rem;">
-                <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
-                <input type="text" name="title" value="<?= h($row['title']) ?>" required>
-                <textarea name="message" required><?= h($row['message']) ?></textarea>
-                <button type="submit" name="edit">Save</button>
-              </form>
+  <!-- Existing announcements -->
+  <section class="card mt-lg">
+    <div class="card-header section-header">
+      <h3 class="card-title section-title">Existing Announcements</h3>
+      <span class="badge soft"><?= (int)count($rows) ?> total</span>
+    </div>
 
-              <!-- Delete form, POST with confirm -->
-              <form method="POST" style="display:inline;" onsubmit="return confirm('Remove this announcement?');">
-                <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
-                <button type="submit" name="delete" class="btn-link">Delete</button>
-              </form>
-            </td>
-          </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
-    </section>
-  <?php endif; ?>
+    <?php if (empty($rows)): ?>
+      <div class="card-body">
+        <p class="muted">No announcements yet.</p>
+      </div>
+    <?php else: ?>
+      <div class="card-body table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="th-18">Title</th>
+              <th>Message</th>
+              <th class="th-16">Date</th>
+              <th class="th-24">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($rows as $row): ?>
+              <tr>
+                <td><strong><?= h($row['title']) ?></strong></td>
+                <td><?= nl2br(h($row['message'])) ?></td>
+                <td><span class="mono"><?= h($row['created_at'] ?? '') ?></span></td>
+                <td>
+                  <!-- Inline edit form -->
+                  <form method="POST" class="inline-form">
+                    <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
+                    <div class="inline-fields">
+                      <input type="text" name="title" value="<?= h($row['title']) ?>" required>
+                    </div>
+                    <div class="inline-fields">
+                      <textarea name="message" rows="3" required><?= h($row['message']) ?></textarea>
+                    </div>
+                    <div class="inline-actions">
+                      <button type="submit" name="edit" class="btn ghost">Save</button>
+                    </div>
+                  </form>
+
+                  <!-- Delete -->
+                  <form method="POST" class="inline-form" onsubmit="return confirm('Remove this announcement?');">
+                    <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
+                    <button type="submit" name="delete" class="btn-link danger">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </section>
 </main>
 
 </body>

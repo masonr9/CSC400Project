@@ -252,67 +252,212 @@ mysqli_stmt_close($stmt); // close the statement
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Approve Reservations</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .shell { 
+      max-width: 1100px; 
+      margin: 1.5rem auto 3rem; 
+      padding: 0 1rem; 
+    }
+    .card {
+      background: #fff; border: 1px solid #eef2f7; border-radius: 12px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); padding: 1.25rem 1.2rem;
+    }
+
+    /* --- Header / Hero --- */
+    .hero {
+      background: radial-gradient(circle at top, #e5f0ff 0%, #ffffff 42%, #ffffff 100%);
+      border: 1px solid #e5e7eb; border-radius: 14px; padding: 1.5rem 1.25rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .hero h2 { margin: 0; font-size: 1.5rem; color: #111827; }
+    .subtle { color: #6b7280; margin: .2rem 0 0; }
+
+    /* --- Toolbar --- */
+    .toolbar { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; margin: .75rem 0 1rem; }
+    .toolbar .search {
+      flex: 1 1 240px; min-width: 220px; display: flex; align-items: center;
+      border: 1px solid #e5e7eb; border-radius: 10px; padding: .45rem .6rem;
+      background: #fff;
+    }
+    .toolbar .search input { border: 0; outline: none; width: 100%; font-size: .95rem; }
+    .chip {
+      border: 1px solid #e5e7eb; border-radius: 9999px; padding: .35rem .7rem;
+      background: #fff; cursor: pointer;
+    }
+    .chip.active { background: #111827; color: #fff; border-color: #111827; }
+
+    /* --- Table --- */
+    .table-wrap { overflow-x: auto; }
+    table.pretty {
+      width: 100%; border-collapse: collapse; font-size: .95rem;
+    }
+    table.pretty thead th {
+      text-align: left; padding: .65rem .6rem; color: #6b7280; font-weight: 700;
+      border-bottom: 1px solid #e5e7eb; white-space: nowrap;
+    }
+    table.pretty tbody td {
+      padding: .65rem .6rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle;
+    }
+    tr:hover { background: #fcfcfd; }
+
+    /* --- Status badge --- */
+    .badge {
+      display: inline-block; font-size: .75rem; font-weight: 700;
+      padding: .2rem .6rem; border-radius: 9999px; letter-spacing: .02em;
+    }
+    .Pending   { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+    .Approved  { background: #ecfeff; color: #155e75; border: 1px solid #a5f3fc; }
+    .Fulfilled { background: #ecfdf5; color: #166534; border: 1px solid #bbf7d0; }
+
+    /* --- Buttons --- */
+    .btn {
+      display: inline-flex; align-items: center; gap: .35rem;
+      border: 1px solid #e5e7eb; background: #fff; color: #1f2937;
+      padding: .45rem .75rem; border-radius: 8px; cursor: pointer; text-decoration: none;
+      font-weight: 600; font-size: .88rem;
+    }
+    .btn:hover { background: #f9fafb; }
+    .btn.primary { background: #dc2626; color: #fff; border-color: #dc2626; }
+    .btn.primary:hover { background: #b91c1c; border-color: #b91c1c; }
+    .btn.success { background: #16a34a; color: #fff; border-color: #16a34a; }
+    .btn.success:hover { background: #15803d; border-color: #15803d; }
+
+    /* --- Flash --- */
+    .flash { padding: .6rem .8rem; border-radius: 10px; margin: .6rem 0 1rem; font-weight: 600; }
+    .flash.green { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .flash.red   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+    /* --- Responsive: stack cells --- */
+    @media (max-width: 720px) {
+      .hero { flex-direction: column; align-items: flex-start; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+      table.pretty thead { display: none; }
+      table.pretty, table.pretty tbody, table.pretty tr, table.pretty td { display: block; width: 100%; }
+      table.pretty tr { border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: .65rem; background: #fff; }
+      table.pretty td { border-bottom: 0; padding: .55rem .75rem; }
+      table.pretty td::before {
+        content: attr(data-label);
+        display: block; font-size: .75rem; color: #6b7280; margin-bottom: .2rem; text-transform: uppercase;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<header>
-  <h1>Library Management System</h1>
-  <nav>
-    <ul>
-      <li><a href="librarian.php">Librarian Dashboard</a></li>
-      <li><a class="logout-btn" href="logout.php">Logout</a></li>
-    </ul>
-  </nav>
-</header>
+<?php include 'librarian_nav.php' ?>
 
-<main>
-  <h2>Approve Reservations</h2>
-
-  <?php if ($flash): ?> <!-- if there is a flash message -->
-    <p style="color: <?= h($flashColor) ?>;"><?= h($flash) ?></p> <!-- show the message in its color-->
+<main class="shell">
+  <div class="hero">
+      <div>
+        <h2>Approve Reservations</h2>
+        <p class="subtle">Review pending requests, approve, or fulfill to create loans.</p>
+      </div>
+  </div>
+  <?php if ($flash): ?>
+    <div class="flash <?= h($flashColor) ?>"><?= h($flash) ?></div>
   <?php endif; ?>
 
-  <?php if (empty($reservations)): ?> 
-    <p class="muted">There are no reservations.</p>
-  <?php else: ?>
-    <table class="res-table" id="reservationTable">
-      <thead>
-        <tr>
-          <th>Member</th>
-          <th>Book</th>
-          <th>Reservation Date</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php foreach ($reservations as $r): ?> <!-- loop through each reservation row -->
-          <tr>
-            <td><?= h($r['member_name']) ?></td>
-            <td><?= h($r['book_title']) ?></td>
-            <td><?= h($r['reservation_date'] ?? '') ?></td>
-            <td><?= h($r['status']) ?></td>
-            <td>
-              <?php if ($r['status'] === 'Pending'): ?>
-                <form method="post" action="approve_reservations.php" class="btn-inline" style="display:inline;">
-                  <input type="hidden" name="approve_id" value="<?= (int)$r['reservation_id'] ?>"> <!-- Hidden id field -->
-                  <button type="submit">Approve</button>
-                </form>
-              <?php elseif ($r['status'] === 'Approved'): ?> <!-- if approved, it will show fulfill button -->
-                <form method="post" action="approve_reservations.php" class="btn-inline" style="display:inline;">
-                  <input type="hidden" name="fulfill_id" value="<?= (int)$r['reservation_id'] ?>"> <!-- hidden id field -->
-                  <button type="submit">Fulfill to Create Loan</button>
-                </form>
-              <?php else: ?> <!-- if fulfilled, no actions -->
-                <span class="muted">-</span>
-              <?php endif; ?>
-            </td>
-          </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
-  <?php endif; ?>
+  <section class="card">
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search">
+        <input type="text" id="searchBox" placeholder="Search by member or book…">
+      </div>
+      <button class="chip active" style="font-size: 0.85em;" data-status="All">All</button>
+      <button class="chip" style="font-size: 0.85em;" data-status="Pending">Pending</button>
+      <button class="chip" style="font-size: 0.85em;" data-status="Approved">Approved</button>
+      <button class="chip" style="font-size: 0.85em;" data-status="Fulfilled">Fulfilled</button>
+    </div>
+
+    <?php if (empty($reservations)): ?>
+      <p class="subtle">There are no reservations.</p>
+    <?php else: ?>
+      <div class="table-wrap">
+        <table class="pretty" id="reservationTable">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Book</th>
+              <th>Reservation Date</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+          <?php foreach ($reservations as $r): ?>
+            <?php
+              $status = (string)($r['status'] ?? '');
+              $badgeClass = in_array($status, ['Pending','Approved','Fulfilled'], true) ? $status : '';
+            ?>
+            <tr
+              data-member="<?= h(mb_strtolower($r['member_name'])) ?>"
+              data-book="<?= h(mb_strtolower($r['book_title'])) ?>"
+              data-status="<?= h($status) ?>"
+            >
+              <td data-label="Member"><?= h($r['member_name']) ?></td>
+              <td data-label="Book"><?= h($r['book_title']) ?></td>
+              <td data-label="Reservation Date"><?= h($r['reservation_date'] ?? '') ?></td>
+              <td data-label="Status">
+                <span class="badge <?= h($badgeClass) ?>"><?= h($status) ?></span>
+              </td>
+              <td data-label="Action">
+                <?php if ($status === 'Pending'): ?>
+                  <form method="post" action="approve_reservations.php" style="display:inline;">
+                    <input type="hidden" name="approve_id" value="<?= (int)$r['reservation_id'] ?>">
+                    <button type="submit" class="btn primary">Approve</button>
+                  </form>
+                <?php elseif ($status === 'Approved'): ?>
+                  <form method="post" action="approve_reservations.php" style="display:inline;">
+                    <input type="hidden" name="fulfill_id" value="<?= (int)$r['reservation_id'] ?>">
+                    <button type="submit" class="btn success">Fulfill → Loan</button>
+                  </form>
+                <?php else: ?>
+                  <span class="subtle">—</span>
+                <?php endif; ?>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </section>
 </main>
+
+<script>
+  // Simple client-side filtering (status & search)
+  const chips = document.querySelectorAll('.chip');
+  const rows  = document.querySelectorAll('#reservationTable tbody tr');
+  const box   = document.getElementById('searchBox');
+
+  let activeStatus = 'All';
+
+  function applyFilters() {
+    const q = (box.value || '').trim().toLowerCase();
+
+    rows.forEach(tr => {
+      const member = tr.getAttribute('data-member') || '';
+      const book   = tr.getAttribute('data-book') || '';
+      const status = tr.getAttribute('data-status') || '';
+
+      const matchStatus = (activeStatus === 'All') || (status === activeStatus);
+      const matchSearch = !q || member.includes(q) || book.includes(q);
+
+      tr.style.display = (matchStatus && matchSearch) ? '' : 'none';
+    });
+  }
+
+  chips.forEach(c => {
+    c.addEventListener('click', () => {
+      chips.forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+      activeStatus = c.getAttribute('data-status');
+      applyFilters();
+    });
+  });
+
+  box.addEventListener('input', applyFilters);
+</script>
 
 </body>
 </html>

@@ -192,83 +192,286 @@ mysqli_stmt_close($stmt); // close the SELECT statement
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Member Management</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Layout shell */
+    .shell {
+      max-width: 1100px;
+      margin: 1.75rem auto 3rem;
+      padding: 0 1rem;
+    }
+
+    /* Title bar */
+    .page-title-bar {
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      border: 1px solid #eef2f7;
+      border-radius: 12px;
+      padding: 1.25rem 1.25rem 1rem;
+      box-shadow: 0 6px 18px rgba(15,23,42,.04);
+      margin-bottom: 1rem;
+    }
+    .page-title { margin: 0; font-size: 1.5rem; color: #111827; }
+    .page-subtitle { margin: .35rem 0 0; color: #6b7280; font-size: .95rem; }
+
+    /* Grid helpers */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 1rem;
+    }
+    .gap-lg { gap: 1.25rem; }
+    .mt-lg { margin-top: 1.25rem; }
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* Cards */
+    .card {
+      background: #fff;
+      border: 1px solid #edf2f7;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(15,23,42,.03);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: .9rem 1rem;
+      border-bottom: 1px solid #eef2f7;
+      background: #f9fafb;
+    }
+    .card-title {
+      margin: 0;
+      font-size: 1rem;
+      color: #111827;
+    }
+    .card-body { padding: 1rem; }
+
+    /* Forms */
+    .form .form-field { margin-bottom: .8rem; }
+    .label { display: block; margin-bottom: .35rem; color: #374151; font-weight: 600; font-size: .9rem; }
+    .input {
+      width: 100%;
+      padding: .55rem .65rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: .95rem;
+      background: #ffffff;
+    }
+    .input:focus {
+      outline: none;
+      border-color: #c7d2fe;
+      box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+    }
+    .form-actions { display: flex; gap: .5rem; align-items: center; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .55rem .9rem;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      color: #1f2937;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn:hover { background: #f9fafb; }
+    .btn.primary {
+      background: #4f46e5;
+      color: #fff;
+      border-color: #4f46e5;
+      box-shadow: 0 8px 18px rgba(79,70,229,.25);
+    }
+    .btn.primary:hover { background: #4338ca; border-color: #4338ca; }
+    .btn.ghost { background: #fff; }
+    .btn.danger { border-color: #fca5a5; color: #b91c1c; background: #fff; }
+    .btn.danger:hover { background: #fef2f2; }
+    .btn.linkish { border: none; background: transparent; padding: 0; }
+
+    /* Alerts */
+    .alert {
+      padding: .75rem 1rem;
+      border-radius: 10px;
+      border: 1px solid;
+      margin: .75rem 0 1rem;
+      font-weight: 600;
+    }
+    .alert-success {
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+      color: #065f46;
+    }
+    .alert-danger {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #991b1b;
+    }
+
+    /* Table */
+    .table-wrap {
+      border: 1px solid #edf2f7;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 4px 14px rgba(15,23,42,.03);
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .table thead th {
+      background: #f9fafb;
+      text-align: left;
+      padding: .75rem 1rem;
+      font-size: .9rem;
+      color: #111827;
+      border-bottom: 1px solid #eef2f7;
+    }
+    .table tbody td {
+      padding: .75rem 1rem;
+      border-bottom: 1px solid #f3f4f6;
+      vertical-align: middle;
+    }
+    .align-right { text-align: right; }
+    .th-40 { width: 40%; }
+    .th-20 { width: 20%; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+    /* Section header */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin-bottom: .6rem;
+    }
+    .section-title { margin: 0; font-size: 1.05rem; color: #111827; }
+    .badge.soft {
+      display: inline-block;
+      padding: .2rem .5rem;
+      font-size: .8rem;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      border: 1px solid #e0e7ff;
+    }
+
+    /* Utility */
+    .inline-form { display: inline; }
+    .stack > * + * { margin-top: .75rem; }
+    .muted { color: #6b7280; }
+  </style>
 </head>
 <body>
 
-<header>
-  <h1>Library Management System</h1>
-  <nav>
-    <ul>
-      <li><a href="librarian.php">Dashboard</a></li>
-      <li><a class="logout-btn" href="logout.php">Logout</a></li>
-    </ul>
-  </nav>
-</header>
+<?php include 'librarian_nav.php' ?>
 
-<main>
-  <h2>Member Management</h2>
+<main class="shell">
+  <!-- Title Bar -->
+  <div class="page-title-bar">
+    <h2 class="page-title">Member Management</h2>
+    <p class="page-subtitle">Add new members, search existing ones, and remove accounts where appropriate.</p>
+  </div>
 
-  <?php if ($flash): ?> <!-- if a flash message exists -->
-    <p style="color: <?= h($flashColor) ?>;"><?= h($flash) ?></p> <!-- displays it with its color-->
+  <!-- Flash -->
+  <?php if ($flash): ?>
+    <div class="alert <?= ($flashColor === 'red') ? 'alert-danger' : 'alert-success' ?>">
+      <?= h($flash) ?>
+    </div>
   <?php endif; ?>
 
-  <!-- Add Member -->
-  <form method="post" class="form-box">
-    <h3>Add Member</h3>
-    <label>Member Name:</label>
-    <input type="text" name="name" style="width:55%" required>
-    <label>Email:</label>
-    <input type="email" name="email" style="width:72%" required>
-    <label>Password:</label>
-    <input type="password" name="password" minlength="8" style="width:65%" required>
-    <button type="submit" name="add_member">Add Member</button>
-  </form>
+  <!-- Forms Row -->
+  <section class="row grid-2 gap-lg">
+    <!-- Add Member -->
+    <article class="card">
+      <div class="card-header">
+        <h3 class="card-title">Add Member</h3>
+      </div>
+      <form method="post" class="card-body form">
+        <div class="form-field">
+          <label class="label">Member Name</label>
+          <input type="text" name="name" class="input" placeholder="Full name" required>
+        </div>
+        <div class="form-field">
+          <label class="label">Email</label>
+          <input type="email" name="email" class="input" placeholder="name@example.com" required>
+        </div>
+        <div class="form-field">
+          <label class="label">Password</label>
+          <input type="password" name="password" class="input" minlength="8" placeholder="Min 8 characters" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" name="add_member" class="btn primary">Add Member</button>
+        </div>
+      </form>
+    </article>
 
-  <!-- Search -->
-  <h3>Search Members</h3>
-  <form method="get" action="member_management.php" class="form-box" style="padding:12px;">
-    <input
-      type="text"
-      name="q"
-      placeholder="Search by name or email..."
-      value="<?= h($q) ?>"
-      style="width:90%; padding:10px; border:1px solid #ccc; border-radius:5px; margin-bottom:10px;"
-    > <!-- the value preserve the current query in the input -->
-    <button type="submit">Search</button>
-    <?php if ($q !== ''): ?> <!-- if currently filtered -->
-      <a href="member_management.php" class="btn-link" style="margin-left:.5rem;">Clear</a> <!-- provide clear link -->
-    <?php endif; ?>
-  </form>
+    <!-- Search -->
+    <article class="card">
+      <div class="card-header">
+        <h3 class="card-title">Search Members</h3>
+      </div>
+      <form method="get" action="member_management.php" class="card-body form">
+        <div class="form-field">
+          <label class="label">Query</label>
+          <input
+            type="text"
+            name="q"
+            class="input"
+            placeholder="Search by name or email..."
+            value="<?= h($q) ?>"
+          >
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn">Search</button>
+          <?php if ($q !== ''): ?>
+            <a href="member_management.php" class="btn ghost">Clear</a>
+          <?php endif; ?>
+        </div>
+      </form>
+    </article>
+  </section>
 
   <!-- Members Table -->
-  <h3>Registered Members</h3>
-  <?php if (empty($members)): ?> <!-- if no rows returned -->
-    <p class="muted">No members found.</p> <!-- show empty state -->
-  <?php else: ?> <!-- otherwise render the table -->
-    <table class="list" id="memberTable">
-      <thead>
-        <tr>
-          <th style="width:40%;">Name</th>
-          <th style="width:40%;">Email</th>
-          <th style="width:20%;">Remove</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php foreach ($members as $m): ?> <!-- loop through each member row -->
+  <section class="stack mt-lg">
+    <div class="section-header">
+      <h3 class="section-title">Registered Members</h3>
+      <?php if (!empty($members)): ?>
+        <span class="badge soft"><?= count($members) ?> total</span>
+      <?php endif; ?>
+    </div>
+
+  <?php if (empty($members)): ?>
+    <p class="muted">No members found.</p>
+  <?php else: ?>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
           <tr>
-            <td><?= h($m['name']) ?></td>
-            <td><?= h($m['email']) ?></td>
-            <td>
-              <form method="post" action="member_management.php" onsubmit="return confirm('Remove this member?');" style="display:inline;">
-                <input type="hidden" name="member_id" value="<?= (int)$m['user_id'] ?>"> <!-- hidden field with user id -->
-                <button type="submit" name="remove_member" class="btn-link">Remove</button>
-              </form>
-            </td>
+            <th class="th-40">Name</th>
+            <th class="th-40">Email</th>
+            <th class="th-20 align-right">Remove</th>
           </tr>
-        <?php endforeach; ?> <!-- end foreach -->
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <?php foreach ($members as $m): ?>
+            <tr>
+              <td><?= h($m['name']) ?></td>
+              <td><span class="mono"><?= h($m['email']) ?></span></td>
+              <td class="align-right">
+                <form method="post" action="member_management.php" class="inline-form"
+                      onsubmit="return confirm('Remove this member?');">
+                  <input type="hidden" name="member_id" value="<?= (int)$m['user_id'] ?>">
+                  <button type="submit" name="remove_member" class="btn danger linkish">Remove</button>
+                </form>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
   <?php endif; ?>
+  </section>
 </main>
 
 </body>
